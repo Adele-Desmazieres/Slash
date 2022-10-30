@@ -1,10 +1,6 @@
-#include <stdlib.h>
-#include <stdio.h>
-#include <assert.h>
-#include <string.h>
-#include <unistd.h>
+
 #include "runner.h"
-#include "printing.c"
+#include "printing.h"
 #include "command/cd.c"
 #include "command/pwd.c"
 #include "command/exit.c"

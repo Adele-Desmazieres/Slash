@@ -1,5 +1,8 @@
-#ifndef PRINTING_C
-#define PRINTING_C
+#include <string.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <assert.h>
+#include <unistd.h>
 
 /**
  * @brief Reduce the lenght of a string to 30 or less characters.
@@ -77,4 +80,3 @@ void printPrompt(int lastCommandResult, char* path) {
     printWithColor(pathToPrint, "\033[34m");
     printWithColor("$ ", "\033[36m");
 }
-#endif
