@@ -1,4 +1,4 @@
-#include "runner.h"
+#include "../runner.h"
 
 #ifndef EXIT_C
 #define EXIT_C

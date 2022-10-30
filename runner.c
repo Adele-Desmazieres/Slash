@@ -5,8 +5,9 @@
 #include <unistd.h>
 #include "runner.h"
 #include "printing.c"
-#include "./command/cd.c"
-#include "./command/pwd.c"
+#include "command/cd.c"
+#include "command/pwd.c"
+#include "command/exit.c"
 
 /**
  * @brief Build a new command based on the struct \b command.

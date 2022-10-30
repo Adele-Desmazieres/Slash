@@ -1,4 +1,4 @@
-#include "runner.h"
+#include "../runner.h"
 
 #ifndef PWDC
 #define PWDC

@@ -18,6 +18,45 @@ char* reducePathPromptLenght(char* currPath) {
 }
 
 /**
+ * @brief
+ * Reset the text color on the prompt.
+ * Shouldn't be useful according to how \b printWithColor works.
+ * 
+ */
+void resetPrintColor() { printf("\033[0m"); }
+
+/**
+ * @brief
+ * Print the content of the \b message argument with a specific font color ( according to \b color )
+ * @param message The message that will be displayed
+ * @param color The font color of this message.
+ */
+void printWithColor(char* message, char* color) {
+    printf("%s", color);
+    printf("%s", message);
+    resetPrintColor();
+}
+
+
+/**
+ * @brief
+ * Print the content of the \b message argument with a green font color
+ * @param message The message that will be displayed
+ */
+void printSuccess(char* message) {
+    printWithColor(message, "\033[32m");
+}
+
+/**
+ * @brief
+ * Print the content of the \b message argument with a red font color
+ * @param message The message that will be displayed
+ */
+void printError(char* message) {
+    printWithColor(message, "\033[91m");
+}
+
+/**
  * @brief Print a prompt line as expected following this format : "[(lastCommandResult)](currentPath)$ "
  * 
  * @param lastCommandResult the result of the last command runned in the smash.
@@ -38,43 +77,4 @@ void printPrompt(int lastCommandResult, char* path) {
     printWithColor(pathToPrint, "\033[34m");
     printWithColor("$ ", "\033[36m");
 }
-
-/**
- * @brief
- * Reset the text color on the prompt.
- * Shouldn't be useful according to how \b printWithColor works.
- * 
- */
-void resetPrintColor() { printf("\033[0m"); }
-
-/**
- * @brief
- * Print the content of the \b message argument with a specific font color ( according to \b color )
- * @param message The message that will be displayed
- * @param color The font color of this message.
- */
-void printWithColor(char* message, char* color) {
-    printf("%s", color);
-    printf("%s", message);
-    resetPrintColor();
-}
-
-/**
- * @brief
- * Print the content of the \b message argument with a green font color
- * @param message The message that will be displayed
- */
-void printSuccess(char* message) {
-    printWithColor(message, "\033[32m");
-}
-
-/**
- * @brief
- * Print the content of the \b message argument with a red font color
- * @param message The message that will be displayed
- */
-void printError(char* message) {
-    printWithColor(message, "\033[91m");
-}
-
 #endif
