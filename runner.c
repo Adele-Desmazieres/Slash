@@ -72,6 +72,14 @@ int isEmptyStack(commandStack* s){
     return s->length == 0;
 }
 
+int freeStack(commandStack* s){
+    while(s->length != 0){
+        if(commandStackPop(s) == NULL) return -1;
+    }
+    free(s);
+    return 0;
+}
+
 /**
  * @brief Build a new command based on the struct \b command.
  * Which contains : The name of this command, all related arguments and their amount, the success state.
@@ -108,7 +116,8 @@ int main(int argc, char *argv[]) {
     //printf("\n");
 
     //A mettre à jour avec chaque appel à cd!
-    char* currPath = getcwd(currPath, MAX_ARGS_STRLEN);
+    char *currPath = malloc(sizeof(char)* MAX_ARGS_STRLEN);
+    getcwd(currPath, MAX_ARGS_STRLEN);
     if(currPath == NULL) {
         perror("problème repertoire courant"); return -1;
     }
@@ -125,6 +134,6 @@ int main(int argc, char *argv[]) {
     commandStackPush(history, comm);
     commandProcessHandler(comm, currPath);
 
-    free(history);
     free(currPath);
+    freeStack(history);
 }

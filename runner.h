@@ -25,6 +25,7 @@ int commandProcessHandler(command* command, char* currPath);
 
 
 //Noeud de la pile de commande
+typedef struct stackNode stackNode;
 typedef struct stackNode{
     command* cmd;
     stackNode* prev;
@@ -42,5 +43,6 @@ int commandStackPush(commandStack* s, command * c);
 command* commandStackPop(commandStack* s);
 command* commandStackPeek(commandStack* s);
 int isEmptyStack(commandStack* s);
+int freeStack(commandStack* s);
 
 #endif
