@@ -39,7 +39,7 @@ int pwdCommandRunner(command* command, const char* currPath) {
         return 0;  
     }
     command->success = FALSE;
-    return -1;
+    return 1;
     
 }
 
