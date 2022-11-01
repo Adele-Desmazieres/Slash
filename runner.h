@@ -25,24 +25,26 @@ int commandProcessHandler(command* command, char* currPath);
 
 
 //Noeud de la pile de commande
-typedef struct stackNode stackNode;
-typedef struct stackNode{
+typedef struct listNode listNode;
+typedef struct listNode{
     command* cmd;
-    stackNode* prev;
-} stackNode;
+    listNode* prev;
+    listNode* next;
+} listNode;
 
 //Pile de commande avec le pointeur vers son sommet et sa taille
-typedef struct commandStack{
+typedef struct commandList{
     int length;
-    stackNode* top;
-} commandStack;
+    listNode* bottom;
+    listNode* top;
+} commandList;
 
-stackNode* buildStackNode(command *c);
-commandStack* buildCommandStack();
-int commandStackPush(commandStack* s, command * c);
-command* commandStackPop(commandStack* s);
-command* commandStackPeek(commandStack* s);
-int isEmptyStack(commandStack* s);
-int freeStack(commandStack* s);
+listNode* buildlistNode(command *c);
+commandList* buildCommandList();
+int commandListPush(commandList* s, command * c);
+command* commandListPop(commandList* s);
+command* commandListPeek(commandList* s);
+int isEmptyList(commandList* s);
+void freeList(commandList* s);
 
 #endif

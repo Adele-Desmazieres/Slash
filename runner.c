@@ -5,79 +5,91 @@
 #include "command/pwd.c"
 #include "command/exit.c"
 
-//Méthodes de piles de commandes commandStack
+//Méthodes de listes de commandes commandList
 
-stackNode* buildStackNode(command *c){
-    stackNode* ret = malloc(sizeof(stackNode));
+listNode* buildlistNode(command *c){
+    listNode* ret = malloc(sizeof(listNode));
     if(ret == NULL){
-        perror("stackNode malloc error\n");
+        perror("listNode malloc error\n");
         return NULL;
     }
     ret->prev = NULL;
+    ret->next = NULL;
     ret->cmd = c;
     return ret;
 }
 
 /**
- * @brief Build a new command stack based on the struct \b commandStack.
- * Which contains : The stack length and the top stack node.
- * @return a pointer commandStack* to the commandStack informations.
+ * @brief Build a new command List based on the struct \b commandList.
+ * Which contains : The List length and the top List node.
+ * @return a pointer commandList* to the commandList informations.
  */
-commandStack* buildCommandStack(){
-    commandStack *ret = malloc(sizeof(commandStack));
+commandList* buildCommandList(){
+    commandList *ret = malloc(sizeof(commandList));
     if(ret == NULL){
-        perror("commandStack malloc error\n");
+        perror("commandList malloc error\n");
         return NULL;
     }
     ret->length=0;
     ret->top = NULL;
+    ret->bottom = NULL;
     return ret;
 }
 
 /**
- * @brief Pushes a c command on the s commandStack .
+ * @brief Pushes a c command on the s commandList .
  * @return 0 if successful, -1 otherwise.
  */
-int commandStackPush(commandStack* s, command * c){
-    stackNode* newTop = buildStackNode(c);
+int commandListPush(commandList* s, command * c){
+    listNode* newTop = buildlistNode(c);
     if(newTop == NULL) return -1;
-    newTop->prev = s->top ;
-    s->top = newTop;
-    s->length++;
-    return 0;
-}
 
-command* commandStackPop(commandStack* s){
-    if (s->length == 0){
-        perror("Pop on empty stack");
-        return NULL;
+    switch (s->length)
+    {
+    case 0 : 
+        s->top = newTop;
+        s->bottom = newTop;
+        s->length++;
+        return 0;
+    
+    default:
+        newTop->prev = s->top;
+        s->top->next = newTop;
+        s->top = newTop;
+        s->length++;
+        return 0;
     }
-    stackNode* oldTop = s->top; 
-    command* ret = oldTop->cmd;
-    s->top= oldTop->prev;
-    free(s->top);
-    s->length--;
-    return ret;
+
+    return -1;
 }
 
-command* commandStackPeek(commandStack* s){
+/**
+ * @brief gets the top command of the command list .
+ * @return a command* located at the top of the list or NULL if the list is empty .
+ */
+command* commandListPeek(commandList* s){
     if(s->length == 0){
-        perror("Peek on empty stack");
+        perror("Peek on empty List");
         return NULL;
     }
     return s->top->cmd;
 }
 
-int isEmptyStack(commandStack* s){
+int isEmptyList(commandList* s){
     return s->length == 0;
 }
 
-int freeStack(commandStack* s){
-    while(s->length != 0){
-        if(commandStackPop(s) == NULL) return -1;
+void freeList(commandList* s){
+
+    listNode* tmp = s->bottom;
+    while(s->length != 0 && tmp != NULL){
+        free(tmp->cmd);
+        free(tmp->prev);
+        tmp=tmp->next;
     }
+    free(s->top);
+    free(s->bottom);
     free(s);
-    return 0;
 }
 
 /**
@@ -123,7 +135,7 @@ int main(int argc, char *argv[]) {
     }
 
     //Création de la pile des commandes
-    commandStack* history = buildCommandStack();
+    commandList* history = buildCommandList();
     if(history == NULL) {
         return -1;
     }
@@ -131,9 +143,9 @@ int main(int argc, char *argv[]) {
     char* tmp[2] = {"pwd","-P"}; 
     command* comm = buildCommand(tmp, 2);
     //Ajout à l'historique (exemple)
-    commandStackPush(history, comm);
+    commandListPush(history, comm);
     commandProcessHandler(comm, currPath);
 
     free(currPath);
-    freeStack(history);
+    freeList(history);
 }
