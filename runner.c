@@ -1,4 +1,6 @@
-
+#include <stdio.h>
+#include <readline/readline.h>
+#include <readline/history.h>
 #include "runner.h"
 #include "printing.h"
 #include "command/cd.c"
@@ -50,8 +52,8 @@ int main(int argc, char *argv[]) {
 
     char* tmp[2] = {"pwd","-P"}; 
     command* comm = buildCommand(tmp, 2);
-    
     commandProcessHandler(comm, currPath);
+    readline( printPrompt(0, path) );
 
     free(currPath);
 }

@@ -1,6 +1,6 @@
 CC=gcc
 CFLAGS=		-Wall -g -pedantic
-LDLIBS= 	-lm
+LDLIBS= 	-lreadline
 
 ALL= runner
 all: $(ALL)
@@ -14,6 +14,6 @@ runner.o: runner.c printing.h command/pwd.c command/exit.c command/cd.c
 
 
 clean:
-	rm -rf *~
+	rm -rf *.o runner
 cleanall:
 	rm -rf *~ *.o $(ALL)
