@@ -12,7 +12,8 @@ void cdArgumentHandler(command* command) {
     command->targetRef = command->args[2];
 }
 
-int cdCommandRunner(command* command) {
+//Ne pas oublier de mettre à jour currPath!
+int cdCommandRunner(command* command, char* currPath) {
     cdArgumentHandler(command);
     if (command->success == FALSE) return 1;
     //TO-DO

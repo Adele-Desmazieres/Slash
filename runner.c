@@ -5,6 +5,7 @@
 #include "command/pwd.c"
 #include "command/exit.c"
 
+
 /**
  * @brief Build a new command based on the struct \b command.
  * Which contains : The name of this command, all related arguments and their amount, the success state.
@@ -24,10 +25,10 @@ command* buildCommand(char** commandLine, int argNumber) {
     return newCommand;
 }
 
-int commandProcessHandler(command* command) {
+int commandProcessHandler(command* command, char* currPath) {
     if ( strcmp(command->name, "exit") == 0 ) return exitCommandRunner(command);
-    if ( strcmp(command->name, "cd") == 0 ) cdCommandRunner(command);
-    if ( strcmp(command->name, "pwd") == 0 ) pwdCommandRunner(command);
+    if ( strcmp(command->name, "cd") == 0 ) cdCommandRunner(command, currPath);
+    if ( strcmp(command->name, "pwd") == 0 ) pwdCommandRunner(command, currPath);
     //TO-DO : cas des commandes externes
     return 0;
 }
@@ -39,7 +40,18 @@ int main(int argc, char *argv[]) {
 
     //printPrompt(0, path);
     //printf("\n");
+
+    //A mettre à jour avec chaque appel à cd!
+    char *currPath = malloc(sizeof(char)* MAX_ARGS_STRLEN);
+    getcwd(currPath, MAX_ARGS_STRLEN);
+    if(currPath == NULL) {
+        perror("problème repertoire courant"); return -1;
+    }
+
     char* tmp[2] = {"pwd","-P"}; 
     command* comm = buildCommand(tmp, 2);
-    commandProcessHandler(comm);
+    
+    commandProcessHandler(comm, currPath);
+
+    free(currPath);
 }
