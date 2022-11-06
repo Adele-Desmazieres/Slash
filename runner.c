@@ -45,6 +45,9 @@ int* commandProcessHandler(command* command, char* currPath) {
         return normalRet;
     } 
     //TO-DO : cas des commandes externes
+
+    //Commande inconnue
+    printf("Commande inconnue\n");
     
     normalRet[0] = 0;
     normalRet[1] = 1;
@@ -138,11 +141,11 @@ int main(int argc, char *argv[]) {
         line = readline(printPrompt(returnValue,currPath));
         add_history(line); 
 
-        printf("%s  : displayed\n", line);
+        //printf("%s  : displayed\n", line);
 
         // parser la ligne (mots et opérateurs séparés par des espaces)
         int nbrArgs = countArgs(line);
-        printf(" > nbrArgs : %d\n", nbrArgs);
+        //printf(" > nbrArgs : %d\n", nbrArgs);
 
         if (parsedLine == NULL) {
             parsedLine = calloc(nbrArgs , sizeof(char *));
@@ -154,7 +157,7 @@ int main(int argc, char *argv[]) {
         //if (parsedLine == NULL) { return -1; }
         
         parsedLine = parseLine(line, parsedLine);
-        printParsed(parsedLine, nbrArgs);
+        //printParsed(parsedLine, nbrArgs);
         
         
         

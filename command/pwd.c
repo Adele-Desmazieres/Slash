@@ -7,11 +7,12 @@
 #define PWDC
 
 void pwdArgumentHandler(command* command) {
+    if (command->argNumber == 1 || strcmp( command->args[1], "-L" ) == 0) return;
     if (strcmp( command->args[1], "-P" ) == 0) {
         command->logicalRef = FALSE;
         return;
     }
-    if (strcmp( command->args[1], "-L" ) == 0) return;
+    
     
     printError("Invalid argument for the command pwd. Expected argument : -L or -P.\n");
     command->success = FALSE;
