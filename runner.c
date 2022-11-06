@@ -145,6 +145,7 @@ int main(int argc, char *argv[]) {
 
         // parser la ligne (mots et opérateurs séparés par des espaces)
         int nbrArgs = countArgs(line);
+        if (nbrArgs == 0) continue;
         //printf(" > nbrArgs : %d\n", nbrArgs);
 
         if (parsedLine == NULL) {
