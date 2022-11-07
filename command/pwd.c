@@ -24,7 +24,7 @@ int pwdCommandRunner(command* command, const char* currPath) {
 
     //Cas -P : on affiche getcwd()
     if (command->logicalRef == FALSE){
-        char currPhysPath[MAX_ARGS_STRLEN];
+        char currPhysPath[MAX_ARGS_NUMBER];
         getcwd(currPhysPath, MAX_ARGS_STRLEN);
         printf("%s\n", "-------------------");
         printf("%s\n", currPhysPath);

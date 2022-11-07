@@ -19,6 +19,6 @@ typedef struct command{
 } command;
 
 command* buildCommand(char** command,  int argNumber);
-int *commandProcessHandler(command* command, char* currPath);
+int commandProcessHandler(command* command, char* currPath);
 
 #endif

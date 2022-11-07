@@ -7,6 +7,8 @@
 #include "command/pwd.c"
 #include "command/exit.c"
 
+#define PATH_MAX 4096
+
 
 /**
  * @brief Build a new command based on the struct \b command.
@@ -27,31 +29,15 @@ command* buildCommand(char** commandLine, int argNumber) {
     return newCommand;
 }
 
-int* commandProcessHandler(command* command, char* currPath) {
-    int* normalRet = calloc(2 , sizeof(int));
-    if(normalRet == NULL) perror("Erreur calloc");
-    
-    if ( strcmp(command->name, "exit") == 0 ){
-        
-        normalRet[0] = exitCommandRunner(command);
-        
-        normalRet[1] = 0;
-        return normalRet;
-    }
-    if ( strcmp(command->name, "cd") == 0 ) cdCommandRunner(command, currPath);
-    if ( strcmp(command->name, "pwd") == 0 ){
-        normalRet[0] = pwdCommandRunner(command, currPath);
-        normalRet[1] = 1;
-        return normalRet;
-    } 
+int commandProcessHandler(command* command, char* currPath) {    
+    if ( strcmp(command->name, "exit") == 0 ) return exitCommandRunner(command, currPath);
+    if ( strcmp(command->name, "cd") == 0 ) return cdCommandRunner(command, currPath);
+    if ( strcmp(command->name, "pwd") == 0 ) return pwdCommandRunner(command, currPath);
     //TO-DO : cas des commandes externes
 
     //Commande inconnue
     printf("Commande inconnue\n");
-    
-    normalRet[0] = 0;
-    normalRet[1] = 1;
-    return normalRet;
+    return FALSE;
 }
 
 int countArgs(const char* c) {
@@ -120,8 +106,6 @@ int main(int argc, char *argv[]) {
     
     rl_outstream = stderr; // affichage du prompt sur la sortie erreur, voir sujet
 
-    int running = 1; 
-
     char* line = malloc(sizeof(char) * MAX_ARGS_STRLEN);
     if (line == NULL) { return -1; }
 
@@ -131,49 +115,39 @@ int main(int argc, char *argv[]) {
         perror("problème repertoire courant"); return -1;
     }
 
-    char** parsedLine = NULL;
-
     using_history();
     int returnValue = 0; 
 
-    while (running) {
-
-        line = readline(printPrompt(returnValue,currPath));
+    while ((line = readline(printPrompt(returnValue,currPath))) != NULL) {
+        char** parsedLine = NULL;
         add_history(line); 
 
-        //printf("%s  : displayed\n", line);
+        printf("displayed : %s\n", line);
 
         // parser la ligne (mots et opérateurs séparés par des espaces)
         int nbrArgs = countArgs(line);
         if (nbrArgs == 0) continue;
         //printf(" > nbrArgs : %d\n", nbrArgs);
 
-        if (parsedLine == NULL) {
-            parsedLine = calloc(nbrArgs , sizeof(char *));
-            if (parsedLine == NULL) perror ("Erreur calloc");
-        } else {
-            if (realloc(parsedLine, nbrArgs * sizeof(char *)) == NULL) { printf("nop"); return -1; };
-        }
+        parsedLine = calloc(nbrArgs , sizeof(char *));
+        if (parsedLine == NULL) perror ("Erreur calloc");
         
         //if (parsedLine == NULL) { return -1; }
         
         parsedLine = parseLine(line, parsedLine);
-        //printParsed(parsedLine, nbrArgs);
-        
-        
+        printf("-----------\n");
+        printParsed(parsedLine, nbrArgs);        
+        printf("-----------\n");
         
         // initier un objet commande
         command* commande = buildCommand(parsedLine, nbrArgs);
         
 
         // interpréter la commande
-        int* stop = commandProcessHandler(commande, currPath) ;
+        int stop = commandProcessHandler(commande, currPath);
         
-        if (stop[1] == 0){
-            running = 0;
-        }
-        returnValue = stop[0];
-        
+        freeParsedLine(parsedLine, nbrArgs);
+        free(commande);
     }
 
     /* OLD TESTS
@@ -183,8 +157,5 @@ int main(int argc, char *argv[]) {
     readline( printPrompt(0, path) );
     */
     
-    free(parsedLine);
-    free(line);
-    free(currPath);
     return returnValue;
 }
