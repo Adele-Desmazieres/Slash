@@ -1,7 +1,6 @@
-#include "../runner.h"
-
 #ifndef CDC
 #define CDC
+#include "../utils/command.c"
 
 void cdArgumentHandler(command* command) {
     if (strcmp( command->args[1], "-P" ) == 0) command->logicalRef = FALSE;
@@ -13,11 +12,12 @@ void cdArgumentHandler(command* command) {
 }
 
 //Ne pas oublier de mettre à jour currPath!
-int cdCommandRunner(command* command, char* currPath) {
+commandResult* cdCommandRunner(command* command, char* currPath) {
     cdArgumentHandler(command);
-    if (command->success == FALSE) return 1;
-    //TO-DO
-    return 0;
+    if (command->success == FALSE) return buildCommandResult(FALSE, "");
+
+    commandResult* commandResult = buildCommandResult(TRUE, "");
+    return commandResult;
 }
 
 #endif

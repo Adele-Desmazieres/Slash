@@ -1,10 +1,26 @@
-#include "../runner.h"
+#include "../utils/command.c"
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <dirent.h>
 
 #ifndef PWDC
 #define PWDC
+
+/* CAS LOGIQUE (-L) */
+commandResult* pwdLogical(command* command, const char* currPath) {
+    char currPhysPath[MAX_ARGS_NUMBER];
+    getcwd(currPhysPath, MAX_ARGS_STRLEN);
+
+    return buildCommandResult(TRUE, currPhysPath);
+}
+/* **************** */
+
+
+/* CAS PHYSIQUE (-L) */
+commandResult* pwdPhysical(command* command, const char* currPath) {
+    return buildCommandResult(TRUE, currPath);
+}
+/* **************** */
 
 void pwdArgumentHandler(command* command) {
     if (command->argNumber == 1 || strcmp( command->args[1], "-L" ) == 0) return;
@@ -13,35 +29,20 @@ void pwdArgumentHandler(command* command) {
         return;
     }
     
-    
     printError("Invalid argument for the command pwd. Expected argument : -L or -P.\n");
     command->success = FALSE;
 }
 
-int pwdCommandRunner(command* command, const char* currPath) {
+commandResult* pwdCommandRunner(command* command, const char* currPath) {
     pwdArgumentHandler(command);
-    if (command->success == FALSE) return 1;
+    if (command->success == FALSE) return buildCommandResult(FALSE, "");
 
     //Cas -P : on affiche getcwd()
-    if (command->logicalRef == FALSE){
-        char currPhysPath[MAX_ARGS_NUMBER];
-        getcwd(currPhysPath, MAX_ARGS_STRLEN);
-        printf("%s\n", "-------------------");
-        printf("%s\n", currPhysPath);
-        printf("%s\n", "-------------------");
-        command->success = TRUE;
-        return 0;
-    //Cas -L : on affiche le chemin stocké dans le main, pwd est donc dépendant de cd...
-    } else {
-        printf("%s\n", "-------------------");
-        printf("%s\n", currPath);
-        printf("%s\n", "-------------------");
-        command->success = TRUE;
-        return 0;  
+    switch (command->logicalRef) {
+        case TRUE : return pwdLogical(command, currPath);
+        case FALSE: return pwdPhysical(command, currPath);
+        default   : return buildCommandResult(FALSE, "");
     }
-    command->success = FALSE;
-    return 1;
-    
 }
 
 #endif
