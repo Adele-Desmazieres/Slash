@@ -3,7 +3,6 @@ CFLAGS=		-Wall -g -pedantic -fPIC
 LDLIBS= 	-lreadline
 
 ALL= runner *.o ./command/*.o ./utils/*.o
-all: $(ALL)
 
 
 # RUNNER
