@@ -1,4 +1,9 @@
-#include "./lineParser.h"
+#include <string.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <ctype.h>
+#include "lineParser.h"
+
 
 int countArgs(const char* c) {
     

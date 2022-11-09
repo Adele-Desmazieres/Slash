@@ -1,7 +1,8 @@
-#include "../utils/command.c"
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <dirent.h>
+#include <string.h>
+#include <unistd.h>
+#include "./pwd.h"
+#include "../utils/command.h"
+#include "../utils/printing.h"
 
 #ifndef PWDC
 #define PWDC

@@ -1,33 +1,18 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
 #include <readline/readline.h>
 #include <readline/history.h>
 #include "runner.h"
+#include "./utils/memory.h"
 #include "./utils/command.h"
+#include "./utils/lineParser.h"
 #include "./utils/printing.h"
-#include "./utils/lineParser.c"
-#include "./command/cd.c"
-#include "./command/pwd.c"
-#include "./command/exit.c"
+#include "./command/cd.h"
+#include "./command/pwd.h"
+#include "./command/exit.h"
 
 #define PATH_MAX 4096
-
-void *Malloc(size_t size, char* errorMessage) {
-    void *ret = malloc(size);
-    if (!ret) {
-        fprintf(stderr, "%s\n", errorMessage);
-        exit(1);
-    }
-    return ret;
-}
-
-void *Calloc(int length, size_t size, char* errorMessage) {
-    void *ret = calloc(length, size);
-    if (!ret) {
-        fprintf(stderr, "%s\n", errorMessage);
-        exit(1);
-    }
-    return ret;
-}
 
 void readResult(command* command, commandResult* commandResult) {
     if (commandResult->success == FALSE) {

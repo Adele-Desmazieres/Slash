@@ -1,11 +1,5 @@
 #ifndef PRINTING_H
-#define PRINTING_H
-
-#include <string.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <assert.h>
-#include <unistd.h>
+#define PRINTING_H 1
 
 void printWithColor(char* message, char* color);
 void printSuccess(char* message);

@@ -1,6 +1,12 @@
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include "./cd.h"
+#include "../utils/command.h"
+#include "../utils/printing.h"
+
 #ifndef CDC
 #define CDC
-#include "../utils/command.c"
 
 /* CAS PHYSIQUE (-P) */
 commandResult* cdPhysical(command* command, const char* currPath) {

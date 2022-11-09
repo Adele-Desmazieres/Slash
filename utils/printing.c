@@ -1,8 +1,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <assert.h>
-#include <unistd.h>
+#include "printing.h"
 
 /**
  * @brief Reduce the lenght of a string to 30 or less characters.

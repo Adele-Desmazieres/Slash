@@ -1,8 +1,10 @@
+#include <stdlib.h>
+#include <stdio.h>
+#include "command.h"
+#include "./memory.h"
+
 #ifndef COMMAND_C
 #define COMMAND_C
-
-#include "./command.h"
-#include <stdio.h>
 
 /**
  * @brief Build a new command based on the struct \b command.
@@ -26,8 +28,8 @@ command* buildCommand(char** commandLine, int argNumber) {
 /**
  * @brief Build a new command result based on the struct \b commandResult.
  * Which contains : 
- * - \b success       : int that represents the success or not of the command. \newline
- * - \b fatal         : int that determinate if the execution is fatal for the slash 
+ * - \b success       : int that represents the success or not of the command.
+ * - \b fatal         : int that determinate if the execution is fatal for the slash.
  *                      or not (always FALSE here)
  * - \b exitCode      : int that will be used to exit the program (unused here.)
  * - \b resultMessage : string that will be displayed as a result of the command 

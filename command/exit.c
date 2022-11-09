@@ -1,6 +1,9 @@
 #ifndef EXIT_C
 #define EXIT_C
-#include "../utils/command.c"
+#include <stdlib.h>
+#include "./exit.h"
+#include "../utils/command.h"
+
 
 void freeParsedLine(char** parsedLine, int parseLineLength) {
     for (int i = 0; i < 0; i++) {
