@@ -6,8 +6,8 @@
 #ifndef PWDC
 #define PWDC
 
-/* CAS LOGIQUE (-L) */
-commandResult* pwdLogical(command* command, const char* currPath) {
+/* CAS PHYSIQUE (-P) */
+commandResult* pwdPhysical(command* command, const char* currPath) {
     char currPhysPath[MAX_ARGS_NUMBER];
     getcwd(currPhysPath, MAX_ARGS_STRLEN);
 
@@ -16,8 +16,8 @@ commandResult* pwdLogical(command* command, const char* currPath) {
 /* **************** */
 
 
-/* CAS PHYSIQUE (-L) */
-commandResult* pwdPhysical(command* command, const char* currPath) {
+/* CAS LOGIQUE (-L) */
+commandResult* pwdLogical(command* command, const char* currPath) {
     return buildCommandResult(TRUE, currPath);
 }
 /* **************** */
