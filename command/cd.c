@@ -15,11 +15,11 @@ commandResult* cdPhysical(command* command, const char* currPath) {
     // TODO : maintenir à jour env var $OLDPWD, pour cd -
     // TODO : tester
         
-    return buildCommandResult(FALSE, currPath);
+    return buildCommandResult(FALSE, "");
 }
 /* **************** */
 
-char** split(char* path) { // renvoie la liste des pointeurs
+char** split(const char* path) { // renvoie la liste des pointeurs
     // TODO
     return NULL;
 }
@@ -27,14 +27,17 @@ char** split(char* path) { // renvoie la liste des pointeurs
 /* CAS LOGIQUE (-L) */
 commandResult* cdLogical(command* command, const char* currPath) {
     // TODO
-    char* targetPath = memcopy(command->args[2]);
-    char* absoluteTargetPath = memcopy(currPath);
+    char* targetPath;
+    char* absoluteTargetPath;
+    strcpy(targetPath, command->args[2]);
+    strcpy(absoluteTargetPath, currPath);
+
     while(split(currPath)) { // parcourir les tokens du string chemin, séparés par des /
         // TODO
     }
 
 
-    return buildCommandResult(TRUE, currPath);
+    return buildCommandResult(TRUE, absoluteTargetPath);
 }
 /* **************** */
 

@@ -18,7 +18,8 @@ commandResult* pwdPhysical(command* command, const char* currPath) {
 
 /* CAS LOGIQUE (-L) */
 commandResult* pwdLogical(command* command, const char* currPath) {
-    return buildCommandResult(TRUE, currPath);
+    char* tmp;
+    return buildCommandResult(TRUE, strcpy(tmp, currPath));
 }
 /* **************** */
 
