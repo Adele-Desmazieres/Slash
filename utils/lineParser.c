@@ -1,6 +1,4 @@
-#ifndef LINE_PARSER_H
-#define LINE_PARSER_H
-
+#include "./lineParser.h"
 
 int countArgs(const char* c) {
     
@@ -55,5 +53,3 @@ char** parseLine(const char* line, char** parsedLine) {
 void printParsed(char ** parsed, int len){
     for(int i = 0; i < len; i++) printf(" argument %d : %s \n", i+1, parsed[i]);
 }
-
-#endif
