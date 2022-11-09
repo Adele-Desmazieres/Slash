@@ -1,59 +1,78 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
 #include <readline/readline.h>
 #include <readline/history.h>
 #include "runner.h"
-#include "printing.h"
-#include "command/cd.c"
-#include "command/pwd.c"
-#include "command/exit.c"
+#include "./utils/memory.h"
+#include "./utils/command.h"
+#include "./utils/lineParser.h"
+#include "./utils/printing.h"
+#include "./command/cd.h"
+#include "./command/pwd.h"
+#include "./command/exit.h"
 
+#define PATH_MAX 4096
 
-/**
- * @brief Build a new command based on the struct \b command.
- * Which contains : The name of this command, all related arguments and their amount, the success state.
- * @param commandLine The line written by the user to run the command.
- * @param argNumber The number of arguments for the command.
- * @return a pointer command* to the command informations.
- */
-command* buildCommand(char** commandLine, int argNumber) {
-    command* newCommand = malloc(sizeof(command));
-    newCommand->name = commandLine[0];
-    newCommand->logicalRef = TRUE;
-    newCommand->success = TRUE; //possiblement useless, on verra plus tard...
-    newCommand->args = commandLine;
-    newCommand->argNumber = argNumber;
-    newCommand->targetRef = NULL;
+void readResult(command* command, commandResult* commandResult) {
+    if (commandResult->success == FALSE) {
+        printError(commandResult->resultMessage);
+        return;
+    }
 
-    return newCommand;
+    printf("%s\n", commandResult->resultMessage);
 }
 
-int commandProcessHandler(command* command, char* currPath) {
-    if ( strcmp(command->name, "exit") == 0 ) return exitCommandRunner(command);
-    if ( strcmp(command->name, "cd") == 0 ) cdCommandRunner(command, currPath);
-    if ( strcmp(command->name, "pwd") == 0 ) pwdCommandRunner(command, currPath);
+commandResult* commandProcessHandler(command* command, char* currPath) {    
+    if ( strcmp(command->name, "exit") == 0 ) return exitCommandRunner(command, currPath);
+    if ( strcmp(command->name, "cd") == 0 ) return cdCommandRunner(command, currPath);
+    if ( strcmp(command->name, "pwd") == 0 ) return pwdCommandRunner(command, currPath);
     //TO-DO : cas des commandes externes
-    return 0;
+
+    //Commande inconnue
+    return buildCommandResult(FALSE, "Command unknown.");
 }
 
 int main(int argc, char *argv[]) {
-    char* path = "oulalah/cest/trop/long/osskour/aled/je/meurs";
-    //char* newPath = reducePathPromptLenght(path);
-    //printf("%s", newPath);
+    int returnValue = 0; 
+    char* line      = Malloc(sizeof(char) * MAX_ARGS_STRLEN, "");
+    char* currPath  = Malloc((PATH_MAX / 4) * sizeof(char), "problème repertoire courant");
+    // a mettre à jour avec chaque appel à cd ; PATH_MAX / 4 car PATH_MAX / 2 trop grand
 
-    //printPrompt(0, path);
-    //printf("\n");
+    getcwd(currPath, (PATH_MAX / 4));
 
-    //A mettre à jour avec chaque appel à cd!
-    char *currPath = malloc(sizeof(char)* MAX_ARGS_STRLEN);
-    getcwd(currPath, MAX_ARGS_STRLEN);
-    if(currPath == NULL) {
-        perror("problème repertoire courant"); return -1;
+    //readline config
+    rl_outstream = stderr;
+    using_history();
+
+    while ((line = readline(printPrompt(returnValue,currPath))) != NULL) {
+        char** parsedLine;
+        add_history(line); 
+
+        printf("displayed : %s\n", line);
+
+        // parser la ligne (mots et opérateurs séparés par des espaces)
+        int nbrArgs = countArgs(line);
+        if (nbrArgs == 0) continue;
+
+        parsedLine = Calloc(nbrArgs , sizeof(char *), "Erreur calloc");
+        parsedLine = parseLine(line, parsedLine);
+        //printParsed(parsedLine, nbrArgs);        
+    
+        // initier un objet commande puis interprète la commande
+        command* commande = buildCommand(parsedLine, nbrArgs);
+        commandResult* result = commandProcessHandler(commande, currPath);
+        freeParsedLine(parsedLine, nbrArgs);
+
+        if (result->fatal == TRUE) { 
+            free(commande); 
+            exit(result->exitCode); 
+        }
+
+        readResult(commande, result);
+        free(commande);
+        returnValue = (result->success == TRUE) ? 0 : 1;
     }
-
-    char* tmp[2] = {"pwd","-P"}; 
-    command* comm = buildCommand(tmp, 2);
-    commandProcessHandler(comm, currPath);
-    readline( printPrompt(0, path) );
-
-    free(currPath);
+    
+    return 1;
 }

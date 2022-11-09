@@ -1,8 +1,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <assert.h>
-#include <unistd.h>
+#include "printing.h"
 
 /**
  * @brief Reduce the lenght of a string to 30 or less characters.
@@ -74,9 +73,9 @@ char* printPrompt(int lastCommandResult, char* path) {
     }
 
     if (lastCommandResult == 1) {
-        sprintf(tmp, "[\033[91m%d\033[0m]\033[34m%s\033[36m$ \033[0m", lastCommandResult, pathToPrint);
+        sprintf(tmp, "\033[0m[\033[91m%d\033[0m]\033[34m%s\033[36m$ \033[0m", lastCommandResult, pathToPrint);
     }else {
-        sprintf(tmp, "[\033[32m%d\033[0m]\033[34m%s\033[36m$ \033[0m", lastCommandResult, pathToPrint);
+        sprintf(tmp, "\033[0m[\033[32m%d\033[0m]\033[34m%s\033[36m$ \033[0m", lastCommandResult, pathToPrint);
     }
 
     return tmp;
