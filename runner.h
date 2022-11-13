@@ -4,7 +4,7 @@
 #define PATH_PROMPT_LIMIT 30
 
 void readResult(command* command, commandResult* commandResult);
-commandResult* commandProcessHandler(command* command, char* currPath);
+commandResult* commandProcessHandler(command* command);
 
 
 #endif

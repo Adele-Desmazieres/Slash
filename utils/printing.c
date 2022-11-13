@@ -6,11 +6,12 @@
 /**
  * @brief Reduce the lenght of a string to 30 or less characters.
  * 
- * @param currPath 
  * @return if the currPath length is higher than 30, return a new char* following
  * this format : "..." followed with the 27 lasts characters of currPath, else return currPath; 
  */
-char* reducePathPromptLenght(char* currPath) {
+char* reducePathPromptLenght() {
+    char* currPath = malloc (sizeof(char) * (strlen(getenv("PATH")) + 1));
+    strcpy (currPath, getenv("PATH"));
     if (strlen(currPath) < 30) return currPath;
     char* reducedPath = calloc(sizeof(char) * 31, sizeof(char));
     strcat(reducedPath, "...");

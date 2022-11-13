@@ -12,7 +12,7 @@ void freeParsedLine(char** parsedLine, int parseLineLength) {
     free(parsedLine);
 }
 
-commandResult* exitCommandRunner(command* command, char* currPath) {
+commandResult* exitCommandRunner(command* command) {
     if (command->argNumber == 1) 
         return buildCommandResult(FALSE, "Argument for the command exit is missing");
     int exitCode = atoi(command->args[1]);

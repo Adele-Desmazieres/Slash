@@ -3,6 +3,6 @@
 #include "../utils/command.h"
 
 void freeParsedLine(char** parsedLine, int parseLineLength);
-commandResult* exitCommandRunner(command* command, char* currPath);
+commandResult* exitCommandRunner(command* command);
 
 #endif

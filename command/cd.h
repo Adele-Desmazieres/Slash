@@ -3,6 +3,6 @@
 #include "../utils/command.h"
 
 void cdArgumentHandler(command* command);
-commandResult* cdCommandRunner(command* command, char* currPath);
+commandResult* cdCommandRunner(command* command);
 
 #endif

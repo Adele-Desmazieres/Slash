@@ -88,14 +88,14 @@ void cdArgumentHandler(command* command) {
 }
 
 //Ne pas oublier de mettre à jour currPath!
-commandResult* cdCommandRunner(command* command, char* currPath) {
+commandResult* cdCommandRunner(command* command) {
     cdArgumentHandler(command);
     if (command->success == FALSE) return buildCommandResult(FALSE, "");
 
     commandResult* commandResult = buildCommandResult(TRUE, "");
 
     switch (command->logicalRef) {
-        case TRUE : commandResult = cdLogical(command, currPath);
+        case TRUE : commandResult = cdLogical(command);
         case FALSE: commandResult = cdPhysical(command);
         default   : commandResult = buildCommandResult(FALSE, "");
     }

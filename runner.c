@@ -23,10 +23,10 @@ void readResult(command* command, commandResult* commandResult) {
     printf("%s\n", commandResult->resultMessage);
 }
 
-commandResult* commandProcessHandler(command* command, char* currPath) {    
-    if ( strcmp(command->name, "exit") == 0 ) return exitCommandRunner(command, currPath);
-    if ( strcmp(command->name, "cd") == 0 ) return cdCommandRunner(command, currPath);
-    if ( strcmp(command->name, "pwd") == 0 ) return pwdCommandRunner(command, currPath);
+commandResult* commandProcessHandler(command* command) {    
+    if ( strcmp(command->name, "exit") == 0 ) return exitCommandRunner(command);
+    if ( strcmp(command->name, "cd") == 0 ) return cdCommandRunner(command);
+    if ( strcmp(command->name, "pwd") == 0 ) return pwdCommandRunner(command);
     //TO-DO : cas des commandes externes
 
     //Commande inconnue
@@ -34,18 +34,21 @@ commandResult* commandProcessHandler(command* command, char* currPath) {
 }
 
 int main(int argc, char *argv[]) {
+    char* currPathTmp = malloc(PATH_MAX * sizeof(char) / 2);
+    getcwd(currPathTmp, (PATH_MAX / 2));
+    if(currPathTmp == NULL) perror("Erreur getcwd");
+    setenv("PATH", currPathTmp, TRUE);
+    free(currPathTmp);
     int returnValue = 0; 
     char* line      = Malloc(sizeof(char) * MAX_ARGS_STRLEN, "");
-    char* currPath  = Malloc((PATH_MAX / 4) * sizeof(char), "problème repertoire courant");
     // a mettre à jour avec chaque appel à cd ; PATH_MAX / 4 car PATH_MAX / 2 trop grand
 
-    getcwd(currPath, (PATH_MAX / 4));
 
     //readline config
     rl_outstream = stderr;
     using_history();
 
-    while ((line = readline(printPrompt(returnValue,currPath))) != NULL) {
+    while ((line = readline(printPrompt(returnValue, getenv("PATH")))) != NULL) {
         char** parsedLine;
         add_history(line); 
 
@@ -61,7 +64,7 @@ int main(int argc, char *argv[]) {
     
         // initier un objet commande puis interprète la commande
         command* commande = buildCommand(parsedLine, nbrArgs);
-        commandResult* result = commandProcessHandler(commande, currPath);
+        commandResult* result = commandProcessHandler(commande);
         freeParsedLine(parsedLine, nbrArgs);
 
         if (result->fatal == TRUE) { 
