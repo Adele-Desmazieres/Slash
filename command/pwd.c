@@ -11,25 +11,16 @@
 
 /* CAS PHYSIQUE (-P) */
 commandResult* pwdPhysical(command* command) {
-    char* currPhysPath = malloc(sizeof(char) * (MAX_ARGS_STRLEN));
-    getcwd(currPhysPath, MAX_ARGS_STRLEN);
 
-    return buildCommandResult(TRUE, currPhysPath);
+    return buildCommandResult(TRUE, getcwd(NULL,0));
 }
 /* **************** */
 
 
 /* CAS LOGIQUE (-L) */
 commandResult* pwdLogical(command* command) {
-    
 
-    char* tmp = getenv("PATH");
-    char* tmp2 = malloc (sizeof(char) * (strlen(tmp) + 1));
-    if(tmp2 == NULL) perror("erreur malloc pwdLogical");
-    *(tmp2+1) = '\0';
-    strcpy (tmp2, tmp);
-
-    return buildCommandResult(TRUE, tmp2);
+    return buildCommandResult(TRUE, getenv("PATH"));
 }
 /* **************** */
 

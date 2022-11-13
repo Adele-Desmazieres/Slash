@@ -54,9 +54,9 @@ int main(int argc, char *argv[]) {
     rl_outstream = stderr;
     using_history();
 
-
+    //printPrompt(returnValue, getenv("PATH"))
     //Boucle principale
-    while ((line = readline(printPrompt(returnValue, getenv("PATH")))) != NULL) {
+    while ((line = readline("TEST $ ")) != NULL) {
         char** parsedLine;
         add_history(line); 
 
@@ -78,9 +78,9 @@ int main(int argc, char *argv[]) {
         
 
         commandResult* result = commandProcessHandler(commande);
-        printf("2\n");
 
         freeParsedLine(parsedLine, nbrArgs);
+
 
         if (result->fatal == TRUE) { 
             freeCommand(commande); 
@@ -90,7 +90,8 @@ int main(int argc, char *argv[]) {
         readResult(commande, result);
         freeCommand(commande);
         returnValue = (result->success == TRUE) ? 0 : 1;
-        freeCommandResult(result);
+        free(result);
+
     }
     
     return 1;

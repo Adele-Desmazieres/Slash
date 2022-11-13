@@ -13,7 +13,6 @@
 /* CAS PHYSIQUE (-P) */
 commandResult* cdPhysical(command* command) {
     char* currPhysPath = malloc(sizeof(char) * MAX_ARGS_NUMBER);
-    printf("0\n");
     // si le processus actuel réussi à changer de current working directory
     // et qu'on arrive à récuperer le nouveau directory grace à cwd
     if (chdir(command->args[2]) == 0 && getcwd(currPhysPath, MAX_ARGS_STRLEN)) { 
@@ -37,8 +36,8 @@ commandResult* cdPhysical(command* command) {
 
     } else {
         printf("B\n");
-        free(currPhysPath);
-        return buildCommandResult(FALSE, ""); // renvoie un échec
+        currPhysPath = "";
+        return buildCommandResult(FALSE, currPhysPath); // renvoie un échec
     }
 }
 /* **************** */

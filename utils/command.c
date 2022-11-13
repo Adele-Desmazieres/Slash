@@ -28,7 +28,6 @@ command* buildCommand(char** commandLine, int argNumber) {
 }
 
 void freeCommand (command* c){
-    free(c->name);
     free(c->targetRef);
     free(c);
     return;
@@ -54,12 +53,6 @@ commandResult* buildCommandResult(int success, char* resultString) {
     newCommandResult->resultMessage = resultString;
 
     return newCommandResult;
-}
-
-void freeCommandResult(commandResult* cr){
-    free(cr->resultMessage);
-    free(cr);
-    return;
 }
 
 /**
