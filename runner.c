@@ -68,13 +68,14 @@ int main(int argc, char *argv[]) {
         freeParsedLine(parsedLine, nbrArgs);
 
         if (result->fatal == TRUE) { 
-            free(commande); 
+            freeCommand(commande); 
             exit(result->exitCode); 
         }
 
         readResult(commande, result);
-        free(commande);
+        freeCommand(commande);
         returnValue = (result->success == TRUE) ? 0 : 1;
+        freeCommandResult(result);
     }
     
     return 1;

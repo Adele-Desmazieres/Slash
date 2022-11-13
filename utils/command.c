@@ -25,6 +25,16 @@ command* buildCommand(char** commandLine, int argNumber) {
     return newCommand;
 }
 
+void freeCommand (command* c){
+    free(c->name);
+    free(c->targetRef);
+    for(int i=0; i < c->argNumber; i++){
+        free(c->args[i]);
+    }
+    free(c);
+    return;
+}
+
 /**
  * @brief Build a new command result based on the struct \b commandResult.
  * Which contains : 
@@ -45,6 +55,12 @@ commandResult* buildCommandResult(int success, char* resultString) {
     newCommandResult->resultMessage = resultString;
 
     return newCommandResult;
+}
+
+void freeCommandResult(commandResult* cr){
+    free(cr->resultMessage);
+    free(cr);
+    return;
 }
 
 /**
