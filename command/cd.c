@@ -5,27 +5,43 @@
 #include "../utils/command.h"
 #include "../utils/printing.h"
 
+#include <stdio.h> // temporaire pour debugger
+
 #ifndef CDC
 #define CDC
 
 /* CAS PHYSIQUE (-P) */
-commandResult* cdPhysical(command* command, const char* currPath) {
-    char currPhysPath[MAX_ARGS_NUMBER];
-
-    chdir(command->args[2]); // le processus actuel change de current working directory
-
-    if (getcwd(currPhysPath, MAX_ARGS_STRLEN)) { // maintient à jour du chemin vers ce directory
-        return buildCommandResult(TRUE, currPhysPath);
-    }
-
-    // TODO : maintenir à jour env var $OLDPWD, pour cd -
-    // TODO : tester
+commandResult* cdPhysical(command* command, char* currPath) {
+    char* currPhysPath = malloc(sizeof(char) * MAX_ARGS_NUMBER);
+    printf("0\n");
+    // si le processus actuel réussi à changer de current working directory
+    // et qu'on arrive à récuperer le nouveau directory grace à cwd
+    if (chdir(command->args[2]) == 0 && getcwd(currPhysPath, MAX_ARGS_STRLEN)) { 
         
-    return buildCommandResult(FALSE, "");
+        printf("A %s\n", currPhysPath);
+
+        // modifie le current path
+        if (realloc(currPath, sizeof(char) * strlen(currPhysPath)) == NULL) {
+            printf("D\n");
+            free(currPhysPath);
+            return buildCommandResult(FALSE, ""); // renvoie un échec
+        };
+        strcpy(currPath, currPhysPath);
+
+        // TODO : tester
+        // TODO : maintenir à jour env var $OLDPWD, pour cd -
+        
+        return buildCommandResult(TRUE, currPhysPath); // renvoie une réussite
+
+    } else {
+        printf("B\n");
+        free(currPhysPath);
+        return buildCommandResult(FALSE, ""); // renvoie un échec
+    }
 }
 /* **************** */
 
-char** split(const char* path) { // renvoie la liste des pointeurs
+char** split(const char* path) { // renvoie la liste des pointeurs des mots
     // TODO
     return NULL;
 }
@@ -49,8 +65,9 @@ commandResult* cdLogical(command* command, const char* currPath) {
 
 
 void cdArgumentHandler(command* command) {
+    printf("%s\n", command->args[1]);
     if (strcmp( command->args[1], "-P" ) == 0) command->logicalRef = FALSE;
-    if (strcmp( command->args[1], "-L" ) != 0 || command->argNumber < 3) {
+    else if (strcmp( command->args[1], "-L" ) != 0 || command->argNumber < 3) {
         printError("Invalid argument for the command cd. Expected command format : cd [-L | -P] [ref | -].\n");
         command->success = FALSE;
     }
