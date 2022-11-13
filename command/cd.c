@@ -11,7 +11,7 @@
 #define CDC
 
 /* CAS PHYSIQUE (-P) */
-commandResult* cdPhysical(command* command, char* currPath) {
+commandResult* cdPhysical(command* command) {
     char* currPhysPath = malloc(sizeof(char) * MAX_ARGS_NUMBER);
     printf("0\n");
     // si le processus actuel réussi à changer de current working directory
@@ -21,13 +21,15 @@ commandResult* cdPhysical(command* command, char* currPath) {
         printf("A %s\n", currPhysPath);
 
         // modifie le current path
+        /*
         if (realloc(currPath, sizeof(char) * strlen(currPhysPath)) == NULL) {
             printf("D\n");
             free(currPhysPath);
             return buildCommandResult(FALSE, ""); // renvoie un échec
         };
         strcpy(currPath, currPhysPath);
-
+        */
+        setenv("PATH", currPhysPath, 1);
         // TODO : tester
         // TODO : maintenir à jour env var $OLDPWD, pour cd -
         
@@ -47,10 +49,11 @@ char** split(const char* path) { // renvoie la liste des pointeurs des mots
 }
 
 /* CAS LOGIQUE (-L) */
-commandResult* cdLogical(command* command, const char* currPath) {
-    // TODO
-    char* targetPath;
-    char* absoluteTargetPath;
+// TODO
+commandResult* cdLogical(command* command) {
+    const char* currPath = getenv("PATH");
+    char* targetPath; // TODO : malloc
+    char* absoluteTargetPath; // TODO : malloc
     strcpy(targetPath, command->args[2]);
     strcpy(absoluteTargetPath, currPath);
 
@@ -93,7 +96,7 @@ commandResult* cdCommandRunner(command* command, char* currPath) {
 
     switch (command->logicalRef) {
         case TRUE : commandResult = cdLogical(command, currPath);
-        case FALSE: commandResult = cdPhysical(command, currPath);
+        case FALSE: commandResult = cdPhysical(command);
         default   : commandResult = buildCommandResult(FALSE, "");
     }
 
