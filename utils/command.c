@@ -1,5 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
+#include "lineParser.h"
 #include "command.h"
 #include "./memory.h"
 
@@ -28,9 +30,6 @@ command* buildCommand(char** commandLine, int argNumber) {
 void freeCommand (command* c){
     free(c->name);
     free(c->targetRef);
-    for(int i=0; i < c->argNumber; i++){
-        free(c->args[i]);
-    }
     free(c);
     return;
 }

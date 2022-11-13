@@ -30,15 +30,21 @@ commandResult* commandProcessHandler(command* command) {
     //TO-DO : cas des commandes externes
 
     //Commande inconnue
-    return buildCommandResult(FALSE, "Command unknown.");
+    char* errMsg = malloc(17 * sizeof(char));
+    strcpy(errMsg, "Command unknown.");
+    return buildCommandResult(FALSE, errMsg);
 }
 
 int main(int argc, char *argv[]) {
+
+    //Init. de $PATH
     char* currPathTmp = malloc(PATH_MAX * sizeof(char) / 2);
     getcwd(currPathTmp, (PATH_MAX / 2));
     if(currPathTmp == NULL) perror("Erreur getcwd");
     setenv("PATH", currPathTmp, TRUE);
     free(currPathTmp);
+
+
     int returnValue = 0; 
     char* line      = Malloc(sizeof(char) * MAX_ARGS_STRLEN, "");
     // a mettre à jour avec chaque appel à cd ; PATH_MAX / 4 car PATH_MAX / 2 trop grand
@@ -48,6 +54,8 @@ int main(int argc, char *argv[]) {
     rl_outstream = stderr;
     using_history();
 
+
+    //Boucle principale
     while ((line = readline(printPrompt(returnValue, getenv("PATH")))) != NULL) {
         char** parsedLine;
         add_history(line); 
@@ -55,16 +63,23 @@ int main(int argc, char *argv[]) {
         printf("displayed : %s\n", line);
 
         // parser la ligne (mots et opérateurs séparés par des espaces)
+        
         int nbrArgs = countArgs(line);
         if (nbrArgs == 0) continue;
+        
 
         parsedLine = Calloc(nbrArgs , sizeof(char *), "Erreur calloc");
         parsedLine = parseLine(line, parsedLine);
+
         //printParsed(parsedLine, nbrArgs);        
     
         // initier un objet commande puis interprète la commande
         command* commande = buildCommand(parsedLine, nbrArgs);
+        
+
         commandResult* result = commandProcessHandler(commande);
+        printf("2\n");
+
         freeParsedLine(parsedLine, nbrArgs);
 
         if (result->fatal == TRUE) { 

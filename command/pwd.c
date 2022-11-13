@@ -1,6 +1,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include "./pwd.h"
 #include "../utils/command.h"
 #include "../utils/printing.h"
@@ -10,7 +11,7 @@
 
 /* CAS PHYSIQUE (-P) */
 commandResult* pwdPhysical(command* command) {
-    char currPhysPath[MAX_ARGS_NUMBER];
+    char* currPhysPath = malloc(sizeof(char) * (MAX_ARGS_STRLEN));
     getcwd(currPhysPath, MAX_ARGS_STRLEN);
 
     return buildCommandResult(TRUE, currPhysPath);
@@ -20,9 +21,14 @@ commandResult* pwdPhysical(command* command) {
 
 /* CAS LOGIQUE (-L) */
 commandResult* pwdLogical(command* command) {
+    
+
     char* tmp = getenv("PATH");
-    char* tmp2 = malloc (sizeof(char) * (strlen(tmp) + 1) );
+    char* tmp2 = malloc (sizeof(char) * (strlen(tmp) + 1));
+    if(tmp2 == NULL) perror("erreur malloc pwdLogical");
+    *(tmp2+1) = '\0';
     strcpy (tmp2, tmp);
+
     return buildCommandResult(TRUE, tmp2);
 }
 /* **************** */
