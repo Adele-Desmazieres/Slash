@@ -66,7 +66,7 @@ void printError(char* message) {
  * @param path the path of the current directory
  */
 char* printPrompt(int lastCommandResult, char* path) {
-    char* tmp = malloc(sizeof(char)*37);
+    char* tmp = malloc(sizeof(char)*63);
 
     char* pathToPrint = path;
     if (strlen(path) > 30) {
@@ -74,9 +74,9 @@ char* printPrompt(int lastCommandResult, char* path) {
     }
 
     if (lastCommandResult == 1) {
-        sprintf(tmp, "\033[0m[\033[91m%d\033[0m]\033[34m%s\033[36m$ \033[0m", lastCommandResult, pathToPrint);
+        snprintf(tmp, 63, "\033[0m[\033[91m%d\033[0m]\033[34m%s\033[36m$ \033[0m", lastCommandResult, pathToPrint);
     }else {
-        sprintf(tmp, "\033[0m[\033[32m%d\033[0m]\033[34m%s\033[36m$ \033[0m", lastCommandResult, pathToPrint);
+        snprintf(tmp, 63, "\033[0m[\033[32m%d\033[0m]\033[34m%s\033[36m$ \033[0m", lastCommandResult, pathToPrint);
     }
 
     return tmp;

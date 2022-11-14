@@ -1,6 +1,7 @@
 #ifndef PRINTING_H
 #define PRINTING_H 1
 
+void resetPrintColor();
 void printWithColor(char* message, char* color);
 void printSuccess(char* message);
 void printError(char* message);

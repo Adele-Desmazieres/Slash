@@ -2,7 +2,7 @@ CC=gcc
 CFLAGS=		-Wall -g -pedantic -fPIC
 LDLIBS= 	-lreadline
 
-ALL= runner *.o ./command/*.o ./utils/*.o
+ALL= runner *.o ./command/*.o ./utils/*.o slash
 
 
 # RUNNER

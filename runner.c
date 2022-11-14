@@ -21,6 +21,7 @@ void readResult(command* command, commandResult* commandResult) {
     }
 
     printf("%s\n", commandResult->resultMessage);
+    resetPrintColor();
 }
 
 commandResult* commandProcessHandler(command* command) {    
@@ -30,8 +31,8 @@ commandResult* commandProcessHandler(command* command) {
     //TO-DO : cas des commandes externes
 
     //Commande inconnue
-    char* errMsg = malloc(17 * sizeof(char));
-    strcpy(errMsg, "Command unknown.");
+    char* errMsg = malloc(20 * sizeof(char));
+    strcpy(errMsg, "Command unknown.\n");
     return buildCommandResult(FALSE, errMsg);
 }
 
@@ -56,7 +57,7 @@ int main(int argc, char *argv[]) {
 
     //printPrompt(returnValue, getenv("PATH"))
     //Boucle principale
-    while ((line = readline("TEST $ ")) != NULL) {
+    while ((line = readline(printPrompt(returnValue, getenv("PATH")))) != NULL) {
         char** parsedLine;
         add_history(line); 
 
