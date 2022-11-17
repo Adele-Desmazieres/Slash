@@ -4,102 +4,128 @@
 #include "./cd.h"
 #include "../utils/command.h"
 #include "../utils/printing.h"
+#include "../utils/stack.h"
+
 
 #include <stdio.h> // temporaire pour debugger
 
 #ifndef CDC
 #define CDC
 
-/* CAS PHYSIQUE (-P) */
+/* CHEMIN PHYSIQUE */
 commandResult* cdPhysical(command* command) {
-    char* currPhysPath = malloc(sizeof(char) * MAX_ARGS_NUMBER);
-    // si le processus actuel réussi à changer de current working directory
-    // et qu'on arrive à récuperer le nouveau directory grace à cwd
-    if (chdir(command->args[2]) == 0 && getcwd(currPhysPath, MAX_ARGS_STRLEN)) { 
-        
-        printf("A %s\n", currPhysPath);
+	char* newPath = malloc(sizeof(char) * MAX_ARGS_STRLEN);
+	
+	// si le processus actuel réussi à changer de current working directory
+	// et qu'on arrive à récuperer le nouveau directory grace à cwd
+	if (chdir(command->targetRef) == 0 && getcwd(newPath, MAX_ARGS_STRLEN)) { 
+		
+		setenv("OLDPATH", getenv("PATH"), 1); // maintient à jour le rep précédent
+		setenv("PATH", newPath, 1); // ici le newPath est le résultat de getcwd
+		
+		return buildCommandResult(TRUE, newPath); // renvoie une réussite
 
-        // modifie le current path
-        /*
-        if (realloc(currPath, sizeof(char) * strlen(currPhysPath)) == NULL) {
-            printf("D\n");
-            free(currPhysPath);
-            return buildCommandResult(FALSE, ""); // renvoie un échec
-        };
-        strcpy(currPath, currPhysPath);
-        */
-        setenv("PATH", currPhysPath, 1);
-        // TODO : tester
-        // TODO : maintenir à jour env var $OLDPWD, pour cd -
-        
-        return buildCommandResult(TRUE, currPhysPath); // renvoie une réussite
-
-    } else {
-        printf("B\n");
-        currPhysPath = "";
-        return buildCommandResult(FALSE, currPhysPath); // renvoie un échec
-    }
+	} else { // sinon échec du changement de directory
+		newPath = realloc(newPath, sizeof(char));
+		newPath = "";
+		return buildCommandResult(FALSE, newPath); 
+	}
 }
-/* **************** */
 
-char** split(const char* path) { // renvoie la liste des pointeurs des mots
-    // TODO
-    return NULL;
+/* CHEMIN LOGIQUE ABSOLU */
+commandResult* cdLogicalAbsolute(command* command) {
+	char* newPath = malloc(sizeof(char) * MAX_ARGS_STRLEN);
+
+	if (chdir(command->targetRef) == 0 ) { 
+		strcpy(newPath, command->targetRef);
+		
+		setenv("OLDPATH", getenv("PATH"), 1); 
+		setenv("PATH", newPath, 1); // ici le newPath est l'argument de la commande
+		
+		return buildCommandResult(TRUE, newPath); 
+
+	} else {
+		newPath = realloc(newPath, sizeof(char));
+		newPath = "";
+		return buildCommandResult(FALSE, newPath); 
+	}	
+}
+
+/* CHEMIN LOGIQUE RELATIF */
+// split la chaine path par le délimiteur '/' et place chaque élément dans la pile
+Stack* split(Stack* s, const char* path) { // renvoie la liste des pointeurs des mots
+	// TODO
+	return NULL;
+}
+
+commandResult* cdLogicalRelative(command* command) {
+	// TODO
+	/*
+	const char* currPath = getenv("PATH");
+	char* relatifTargetPath; // TODO : malloc ?
+	char* absoluteTargetPath; // TODO : malloc ?s
+	strcpy(relatifTargetPath, command->args[2]);
+	strcpy(absoluteTargetPath, currPath);
+
+	while(split(currPath)) { // parcourir les tokens du string chemin, séparés par des /
+		// TODO
+	}
+	*/
+	return NULL;
 }
 
 /* CAS LOGIQUE (-L) */
 // TODO
 commandResult* cdLogical(command* command) {
-    const char* currPath = getenv("PATH");
-    char* targetPath; // TODO : malloc
-    char* absoluteTargetPath; // TODO : malloc
-    strcpy(targetPath, command->args[2]);
-    strcpy(absoluteTargetPath, currPath);
-
-    while(split(currPath)) { // parcourir les tokens du string chemin, séparés par des /
-        // TODO
-    }
-
-
-    return buildCommandResult(TRUE, absoluteTargetPath);
-}
-/* **************** */
-
-
-void cdArgumentHandler(command* command) {
-    printf("%s\n", command->args[1]);
-    if (strcmp( command->args[1], "-P" ) == 0) command->logicalRef = FALSE;
-    else if (strcmp( command->args[1], "-L" ) != 0 || command->argNumber < 3) {
-        printError("Invalid argument for the command cd. Expected command format : cd [-L | -P] [ref | -].\n");
-        command->success = FALSE;
-    }
-    /* TODO 
-    Cas particuliers :
-    cd - : retourne au dernier répertoire, contenu dans une var d'environnement $OLDPWD
-    cd : retourne au répertoire ~ contenu dans la var d'environnement $HOME
-    cd path = cd -L path
-
-    Gerer var environnement :
-    setenv
-    getenv
-    */
-    command->targetRef = command->args[2];
+	char first = command->targetRef[0];
+	if (first == '/') { // si commence par un / alors chemin absolu
+		return cdLogicalAbsolute(command);
+	
+	} else { // sinon on a un chemin relatif
+		return cdLogicalRelative(command);
+	}
 }
 
-//Ne pas oublier de mettre à jour currPath!
+commandResult* cdHome(command* command) {
+	return NULL;
+}
+
+commandResult* cdBack(command* command) {
+	return NULL;
+}
+
 commandResult* cdCommandRunner(command* command) {
-    cdArgumentHandler(command);
-    if (command->success == FALSE) return buildCommandResult(FALSE, "");
-
-    commandResult* commandResult = buildCommandResult(TRUE, "");
-
-    switch (command->logicalRef) {
-        case TRUE : commandResult = cdLogical(command);
-        case FALSE: commandResult = cdPhysical(command);
-        default   : commandResult = buildCommandResult(FALSE, "");
-    }
-
-    return commandResult;
+	//cdArgumentHandler(command);	
+	//if (command->success == FALSE) return buildCommandResult(FALSE, "");
+	commandResult* commandResult;
+	
+	switch (command->argNumber) {
+		case 1 : commandResult = cdHome(command); break; // si "cd" alors -> home
+		
+		case 2 : 
+			if (strcmp(command->args[1], "-") == 0) commandResult = cdBack(command); // si "cd -" alors retour en arriere
+			else {
+				command->targetRef = command->args[1];
+				commandResult = cdLogical(command); // si "cd path" sans option, alors logical
+			}
+			break;
+		
+		case 3 :
+			command->targetRef = command->args[2];
+			if (strcmp(command->args[1], "-L" ) == 0) {
+				commandResult = cdLogical(command); 
+			} else if (strcmp(command->args[1], "-P" ) == 0) {
+				commandResult = cdPhysical(command); 
+			} else {
+				commandResult = buildCommandResult(FALSE, "Invalid argument for the command cd. Expected command format : cd [-L | -P | - ] [ref].\n");
+			}
+			break;
+		
+		default :
+			commandResult = buildCommandResult(FALSE, "Invalid argument for the command cd. Expected command format : cd [-L | -P | - ] [ref].\n");
+		
+	}
+	return commandResult;
 }
 
 
