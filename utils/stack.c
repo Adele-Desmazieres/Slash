@@ -77,23 +77,3 @@ char* pop(Stack* p) {
 	return ret;
 }
 
-int main() {
-	
-	Stack* s = newStack();
-	//Node* n1 = newNode("bonjour");
-	//Node* n2 = newNode("je");
-	push(s, "bonjour");
-	push(s, "je");
-	push(s, "m");
-	push(s, "appelle");
-	push(s, "Adele");
-	while (s->length > 0) {
-		printf("%s\n", pop(s));	
-	}
-	
-	char* a = peek(s);
-	if (a == NULL) printf("head est NULL\n");
-	if (isEmpty(s)) printf("la pile est vide\n");
-	
-	return 0;
-}
