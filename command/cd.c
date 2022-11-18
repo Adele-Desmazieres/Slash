@@ -12,57 +12,59 @@
 #ifndef CDC
 #define CDC
 
-/* CHEMIN PHYSIQUE */
-commandResult* cdPhysical(command* command) {
-	char* newPath = malloc(sizeof(char) * MAX_ARGS_STRLEN);
+// TODO : malloc les chaines de char dans les messages d'erreur ?
+/* Changement de directory */
+commandResult* cdTarget(command* command) {
+	char* tmp = malloc(sizeof(char) * (strlen(command->targetRef) + 1));
+	if (tmp == NULL) return buildFatalCommandResult(FALSE, "malloc échoué", 1);
+	strcpy(tmp, command->targetRef);
+	commandResult* res;
 	
-	// si le processus actuel réussi à changer de current working directory
-	// et qu'on arrive à récuperer le nouveau directory grace à cwd
-	if (chdir(command->targetRef) == 0 && getcwd(newPath, MAX_ARGS_STRLEN)) { 
+	int error = 0;
+	
+	if (chdir(tmp) == 0) {
+		tmp = realloc(tmp, sizeof(char) * MAX_ARGS_STRLEN);
+		if (tmp == NULL) return buildFatalCommandResult(FALSE, "realloc échoué", 1);
+		if (getcwd(tmp, sizeof(char) * MAX_ARGS_STRLEN) == NULL) return buildFatalCommandResult(FALSE, "getcwd échoué", 1);
 		
-		setenv("OLDPWD", getenv("PWD"), 1); // maintient à jour le rep précédent
-		setenv("PWD", newPath, 1); // ici le newPath est le résultat de getcwd
+		error += setenv("OLDPWD", getenv("PWD"), 1);
 		
-		return buildCommandResult(TRUE, newPath); // renvoie une réussite
-
-	} else { // sinon échec du changement de directory
-		newPath = realloc(newPath, sizeof(char));
-		newPath = "";
-		return buildCommandResult(FALSE, newPath); 
-	}
-}
-
-/* CHEMIN LOGIQUE ABSOLU */
-commandResult* cdLogicalAbsolute(command* command) {
-	char* newPath = malloc(sizeof(char) * MAX_ARGS_STRLEN);
-
-	if (chdir(command->targetRef) == 0 ) { 
-		strcpy(newPath, command->targetRef);
+		// teste si appelé en mode physique ou logique pour savoir quel path renvoyer
+		if (command->logicalRef) error += setenv("PWD", command->targetRef, 1); // le chemin donné en argument
+		else error += setenv("PWD", tmp, 1); // le chemin renvoyé par getcwd
 		
-		setenv("OLDPWD", getenv("PWD"), 1); 
-		setenv("PWD", newPath, 1); // ici le newPath est l'argument de la commande
+		if (error == 0) return buildCommandResult(TRUE, tmp);
+		else res = buildFatalCommandResult(FALSE, "setenv échoué", 1);
 		
-		return buildCommandResult(TRUE, newPath); 
-
 	} else {
-		newPath = realloc(newPath, sizeof(char));
-		newPath = "";
-		return buildCommandResult(FALSE, newPath); 
-	}	
+		res = buildCommandResult(FALSE, "Répertoire non trouvé.\n");
+	}
+	free(tmp);
+	return res;
+}
+
+/* CHEMIN PHYSIQUE ET CHEMIN LOGIQUE ABSOLU 
+ * Set leur target directory puis appelle la fonction de chgt de directory. */
+commandResult* setTargetToDirectory(command* command, char* target) {
+	command->targetRef = malloc(sizeof(char) * (strlen(target) + 1));
+	if (command->targetRef == NULL) return buildFatalCommandResult(FALSE, "malloc échoué", 1);
+	
+	strcpy(command->targetRef, target);
+	return cdTarget(command);	
 }
 
 
-// split le string "path" par le délimiteur '/' 
-// place chaque élément dans la pile s
-// dans le sens de lecture si forward=1, dans l'autre sens sinon
+/* Sépare le string "path" par le délimiteur '/' 
+ * place chaque élément dans la pile s
+ * dans le sens de lecture si forward=1, dans l'autre sens sinon */
 Stack* split(Stack* s, const char* path, int forward) { 
 	// TODO
 	return NULL;
 }
 
 /* CHEMIN LOGIQUE RELATIF */
-commandResult* cdLogicalRelative(command* command) {
-	
+commandResult* cdLogicalRelative(command* command, char* target) {
+	/*
 	const char* currPath = getenv("PWD");
 	char* absoluteTargetPath; // TODO : malloc ?
 	strcpy(absoluteTargetPath, currPath);
@@ -79,64 +81,75 @@ commandResult* cdLogicalRelative(command* command) {
 	while((token = pop(s2))) { // parcourir les tokens du string chemin, séparés par des /
 		// TODO
 	}
-
+	*/
 	return NULL;
 }
 
+
 /* CHEMIN LOGIQUE */
-// TODO
-commandResult* cdLogical(command* command) {
-	char first = command->targetRef[0];
+commandResult* cdLogical(command* command, char* target) {
+	
+	char first = target[0];
 	if (first == '/') { // si commence par un / alors chemin absolu
-		return cdLogicalAbsolute(command);
+		return setTargetToDirectory(command, target);
 	
 	} else { // sinon on a un chemin relatif
-		return cdLogicalRelative(command);
+		return cdLogicalRelative(command, target);
 	}
 }
 
-/* Aller au directory HOME */
-commandResult* cdHome(command* command) {
-	return NULL;
-}
 
-/* Retour au directory précédent */
-commandResult* cdBack(command* command) {
-	char* tmp;
+
+/* Set command->targetRef au répertoire contenu dans la variable d'environnement envVarName */
+commandResult* setTargetToEnvVar(command* command, char* envVarName) {
 	
-	if ((tmp = getenv("OLDPWD"))) {
-		setenv("OLDPWD", getenv("PWD"), 1); 
-		setenv("PWD", tmp, 1);
-		return buildCommandResult(TRUE, getenv("PWD"));;
-
+	if (getenv(envVarName)) {
+		char* buff = malloc(sizeof(char) * (strlen(getenv(envVarName)) + 1) );
+		if (buff == NULL) return buildFatalCommandResult(FALSE, "malloc échoué", 1);
+		
+		strcpy(buff, getenv(envVarName));
+		command->targetRef = buff;
+		return cdTarget(command);
+		
 	} else {
-		return buildCommandResult(FALSE, "OLDPATH non défini.\n");;
+		// TODO GERTER LE MALLOC DE YANIS DANS COMMAND.C pour pouvoir malloc ici le mess d'erreur
+		// afin d'afficher le nom de la var non initialisée via concaténation
+		return buildCommandResult(FALSE, "Variable d'environnement non définie.\n");
 	}
 }
 
 
 commandResult* cdCommandRunner(command* command) {
-	//cdArgumentHandler(command);	
-	//if (command->success == FALSE) return buildCommandResult(FALSE, "");
+	command->logicalRef = TRUE; // par défaut en mode logique
 	commandResult* commandResult;
 	
 	switch (command->argNumber) {
-		case 1 : commandResult = cdHome(command); break; // si "cd" alors -> home
+		// "cd" -> home
+		case 1 : 
+			commandResult = setTargetToEnvVar(command, "HOME"); 
+			command->logicalRef = FALSE;
+			break; 
 		
+		// "cd -" -> OLDPWD OR "cd path/to/directory"
 		case 2 : 
-			if (strcmp(command->args[1], "-") == 0) commandResult = cdBack(command); // si "cd -" alors retour en arriere
-			else {
-				command->targetRef = command->args[1];
-				commandResult = cdLogical(command); // si "cd path" sans option, alors logical
+			if (strcmp(command->args[1], "-") == 0) {
+				command->logicalRef = FALSE;
+				commandResult = setTargetToEnvVar(command, "OLDPWD"); 
+				
+			} else { // cd path/to/directory
+				command->logicalRef = TRUE;
+				commandResult = cdLogical(command, command->args[1]); // si "cd path" sans option, alors logical
 			}
 			break;
 		
+		// "cd [-L | -P] path/to/directory"
 		case 3 :
-			command->targetRef = command->args[2];
+			//command->targetRef = command->args[2];
 			if (strcmp(command->args[1], "-L" ) == 0) {
-				commandResult = cdLogical(command); 
+				commandResult = cdLogical(command, command->args[2]); 
 			} else if (strcmp(command->args[1], "-P" ) == 0) {
-				commandResult = cdPhysical(command); 
+				command->logicalRef = FALSE;
+				commandResult = setTargetToDirectory(command, command->args[2]); 
 			} else {
 				commandResult = buildCommandResult(FALSE, "Invalid argument for the command cd. Expected command format : cd [-L | -P | - ] [ref].\n");
 			}
