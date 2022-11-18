@@ -20,8 +20,8 @@ commandResult* cdPhysical(command* command) {
 	// et qu'on arrive à récuperer le nouveau directory grace à cwd
 	if (chdir(command->targetRef) == 0 && getcwd(newPath, MAX_ARGS_STRLEN)) { 
 		
-		setenv("OLDPATH", getenv("PATH"), 1); // maintient à jour le rep précédent
-		setenv("PATH", newPath, 1); // ici le newPath est le résultat de getcwd
+		setenv("OLDPWD", getenv("PWD"), 1); // maintient à jour le rep précédent
+		setenv("PWD", newPath, 1); // ici le newPath est le résultat de getcwd
 		
 		return buildCommandResult(TRUE, newPath); // renvoie une réussite
 
@@ -39,8 +39,8 @@ commandResult* cdLogicalAbsolute(command* command) {
 	if (chdir(command->targetRef) == 0 ) { 
 		strcpy(newPath, command->targetRef);
 		
-		setenv("OLDPATH", getenv("PATH"), 1); 
-		setenv("PATH", newPath, 1); // ici le newPath est l'argument de la commande
+		setenv("OLDPWD", getenv("PWD"), 1); 
+		setenv("PWD", newPath, 1); // ici le newPath est l'argument de la commande
 		
 		return buildCommandResult(TRUE, newPath); 
 
@@ -51,30 +51,39 @@ commandResult* cdLogicalAbsolute(command* command) {
 	}	
 }
 
-/* CHEMIN LOGIQUE RELATIF */
-// split la chaine path par le délimiteur '/' et place chaque élément dans la pile
-Stack* split(Stack* s, const char* path) { // renvoie la liste des pointeurs des mots
+
+// split le string "path" par le délimiteur '/' 
+// place chaque élément dans la pile s
+// dans le sens de lecture si forward=1, dans l'autre sens sinon
+Stack* split(Stack* s, const char* path, int forward) { 
 	// TODO
 	return NULL;
 }
 
+/* CHEMIN LOGIQUE RELATIF */
 commandResult* cdLogicalRelative(command* command) {
-	// TODO
-	/*
-	const char* currPath = getenv("PATH");
-	char* relatifTargetPath; // TODO : malloc ?
-	char* absoluteTargetPath; // TODO : malloc ?s
-	strcpy(relatifTargetPath, command->args[2]);
+	
+	const char* currPath = getenv("PWD");
+	char* absoluteTargetPath; // TODO : malloc ?
 	strcpy(absoluteTargetPath, currPath);
-
-	while(split(currPath)) { // parcourir les tokens du string chemin, séparés par des /
+	Stack* s1 = newStack();
+	s1 = split(s1, absoluteTargetPath, TRUE);
+	
+	char* relatifTargetPath; // TODO : malloc ?
+	strcpy(relatifTargetPath, command->args[2]);
+	Stack* s2 = newStack();
+	s2 = split(s2, relatifTargetPath, FALSE);
+	
+	char* token;
+	
+	while((token = pop(s2))) { // parcourir les tokens du string chemin, séparés par des /
 		// TODO
 	}
-	*/
+
 	return NULL;
 }
 
-/* CAS LOGIQUE (-L) */
+/* CHEMIN LOGIQUE */
 // TODO
 commandResult* cdLogical(command* command) {
 	char first = command->targetRef[0];
@@ -86,13 +95,25 @@ commandResult* cdLogical(command* command) {
 	}
 }
 
+/* Aller au directory HOME */
 commandResult* cdHome(command* command) {
 	return NULL;
 }
 
+/* Retour au directory précédent */
 commandResult* cdBack(command* command) {
-	return NULL;
+	char* tmp;
+	
+	if ((tmp = getenv("OLDPWD"))) {
+		setenv("OLDPWD", getenv("PWD"), 1); 
+		setenv("PWD", tmp, 1);
+		return buildCommandResult(TRUE, getenv("PWD"));;
+
+	} else {
+		return buildCommandResult(FALSE, "OLDPATH non défini.\n");;
+	}
 }
+
 
 commandResult* cdCommandRunner(command* command) {
 	//cdArgumentHandler(command);	

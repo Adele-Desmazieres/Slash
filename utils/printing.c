@@ -10,8 +10,8 @@
  * this format : "..." followed with the 27 lasts characters of currPath, else return currPath; 
  */
 char* reducePathPromptLenght() {
-    char* currPath = malloc (sizeof(char) * (strlen(getenv("PATH")) + 1));
-    strcpy (currPath, getenv("PATH"));
+    char* currPath = malloc (sizeof(char) * (strlen(getenv("PWD")) + 1));
+    strcpy (currPath, getenv("PWD"));
     if (strlen(currPath) < 30) return currPath;
     char* reducedPath = calloc(sizeof(char) * 31, sizeof(char));
     strcat(reducedPath, "...");

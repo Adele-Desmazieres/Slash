@@ -42,7 +42,7 @@ int main(int argc, char *argv[]) {
     char* currPathTmp = malloc(PATH_MAX * sizeof(char) / 2);
     getcwd(currPathTmp, (PATH_MAX / 2));
     if(currPathTmp == NULL) perror("Erreur getcwd");
-    setenv("PATH", currPathTmp, TRUE);
+    setenv("PWD", currPathTmp, TRUE);
     free(currPathTmp);
 
 
@@ -55,9 +55,9 @@ int main(int argc, char *argv[]) {
     rl_outstream = stderr;
     using_history();
 
-    //printPrompt(returnValue, getenv("PATH"))
+    //printPrompt(returnValue, getenv("PWD"))
     //Boucle principale
-    while ((line = readline(printPrompt(returnValue, getenv("PATH")))) != NULL) {
+    while ((line = readline(printPrompt(returnValue, getenv("PWD")))) != NULL) {
         char** parsedLine;
         add_history(line); 
 

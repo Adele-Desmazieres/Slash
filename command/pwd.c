@@ -20,7 +20,7 @@ commandResult* pwdPhysical(command* command) {
 /* CAS LOGIQUE (-L) */
 commandResult* pwdLogical(command* command) {
 
-    return buildCommandResult(TRUE, getenv("PATH"));
+    return buildCommandResult(TRUE, getenv("PWD"));
 }
 /* **************** */
 
