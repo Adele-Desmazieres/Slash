@@ -77,3 +77,13 @@ char* pop(Stack* p) {
 	return ret;
 }
 
+Stack* reverseStack(Stack* s1) {
+	Stack* s2 = newStack();
+	char* pointeur;
+	while (!isEmpty(s1)) {
+		pointeur = pop(s1);
+		push(s2, pointeur);
+	}
+	return s2;
+}
+
