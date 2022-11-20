@@ -1,5 +1,7 @@
 #include <string.h>
 #include <unistd.h>
+#include <stdlib.h>
+#include <stdio.h>
 #include "./pwd.h"
 #include "../utils/command.h"
 #include "../utils/printing.h"
@@ -8,19 +10,17 @@
 #define PWDC
 
 /* CAS PHYSIQUE (-P) */
-commandResult* pwdPhysical(command* command, const char* currPath) {
-    char currPhysPath[MAX_ARGS_NUMBER];
-    getcwd(currPhysPath, MAX_ARGS_STRLEN);
+commandResult* pwdPhysical(command* command) {
 
-    return buildCommandResult(TRUE, currPhysPath);
+    return buildCommandResult(TRUE, getcwd(NULL,0));
 }
 /* **************** */
 
 
 /* CAS LOGIQUE (-L) */
-commandResult* pwdLogical(command* command, const char* currPath) {
-    char* tmp;
-    return buildCommandResult(TRUE, strcpy(tmp, currPath));
+commandResult* pwdLogical(command* command) {
+
+    return buildCommandResult(TRUE, getenv("PWD"));
 }
 /* **************** */
 
@@ -35,14 +35,14 @@ void pwdArgumentHandler(command* command) {
     command->success = FALSE;
 }
 
-commandResult* pwdCommandRunner(command* command, const char* currPath) {
+commandResult* pwdCommandRunner(command* command) {
     pwdArgumentHandler(command);
     if (command->success == FALSE) return buildCommandResult(FALSE, "");
 
     //Cas -P : on affiche getcwd()
     switch (command->logicalRef) {
-        case TRUE : return pwdLogical(command, currPath);
-        case FALSE: return pwdPhysical(command, currPath);
+        case TRUE : return pwdLogical(command);
+        case FALSE: return pwdPhysical(command);
         default   : return buildCommandResult(FALSE, "");
     }
 }

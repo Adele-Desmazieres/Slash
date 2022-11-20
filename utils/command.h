@@ -27,6 +27,8 @@ typedef struct commandResult{
     char* resultMessage;
 } commandResult;
 
+void freeCommandResult(commandResult* cr);
+void freeCommand (command* c);
 command* buildCommand(char** command,  int argNumber);
 commandResult* buildCommandResult(int success, char* resultString);
 commandResult* buildFatalCommandResult(int success, char* errorMessage, int exitCode);

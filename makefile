@@ -2,7 +2,7 @@ CC=gcc
 CFLAGS=		-Wall -g -pedantic -fPIC
 LDLIBS= 	-lreadline
 
-ALL= runner *.o ./command/*.o ./utils/*.o
+ALL= runner *.o ./command/*.o ./utils/*.o slash
 
 
 # RUNNER
@@ -25,7 +25,7 @@ commands.o: ./command/cd.o ./command/exit.o ./command/pwd.o
 	$(CC) -c -fPIC ./command/pwd.c -o ./command/pwd.o
 
 # UTILS
-utils.o: ./utils/command.o ./utils/lineParser.o ./utils/memory.o ./utils/printing.o
+utils.o: ./utils/command.o ./utils/lineParser.o ./utils/memory.o ./utils/printing.o ./utils/stack.o
 
 command.o: ./utils/command.c
 	$(CC) -c -fPIC ./utils/command.c -o ./utils/command.o
@@ -39,6 +39,8 @@ memory.o: ./utils/memory.c
 printing.o: ./utils/printing.c
 	$(CC) -c -fPIC ./utils/printing.c -o ./utils/printing.o
 
+stack.o: ./utils/stack.c
+	$(CC) -c -fPIC ./utils/stack.c -o ./utils/stack.o
 
 
 

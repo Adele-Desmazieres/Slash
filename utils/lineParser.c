@@ -58,3 +58,10 @@ char** parseLine(const char* line, char** parsedLine) {
 void printParsed(char ** parsed, int len){
     for(int i = 0; i < len; i++) printf(" argument %d : %s \n", i+1, parsed[i]);
 }
+
+void freeParsedLine(char** parsedLine, int parseLineLength) {
+    for (int i = 0; i < 0; i++) {
+        free(parsedLine[i]);
+    }
+    free(parsedLine);
+}

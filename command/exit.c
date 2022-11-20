@@ -1,20 +1,18 @@
 #ifndef EXIT_C
 #define EXIT_C
 #include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
 #include "./exit.h"
 #include "../utils/command.h"
 
 
-void freeParsedLine(char** parsedLine, int parseLineLength) {
-    for (int i = 0; i < 0; i++) {
-        free(parsedLine[i]);
+commandResult* exitCommandRunner(command* command) {
+    if (command->argNumber == 2 && !isdigit(*command->args[1])) {
+        return buildFatalCommandResult(TRUE, "Incorrect argument for command 'exit [val]'", 2);
     }
-    free(parsedLine);
-}
-
-commandResult* exitCommandRunner(command* command, char* currPath) {
-    if (command->argNumber == 1) 
-        return buildCommandResult(FALSE, "Argument for the command exit is missing");
+    //TODO utiliser la valeur de retour de la dernière commande à la place de 0
+    if (command->argNumber == 1) return buildFatalCommandResult(TRUE, "Successfully exited program.", 0);
     int exitCode = atoi(command->args[1]);
 
     commandResult* commandResult = buildFatalCommandResult(TRUE, "Successfully exited program.", exitCode);

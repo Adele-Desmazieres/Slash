@@ -1,5 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
+#include "lineParser.h"
 #include "command.h"
 #include "./memory.h"
 
@@ -25,6 +27,12 @@ command* buildCommand(char** commandLine, int argNumber) {
     return newCommand;
 }
 
+void freeCommand (command* c){
+    free(c->targetRef);
+    free(c);
+    return;
+}
+
 /**
  * @brief Build a new command result based on the struct \b commandResult.
  * Which contains : 
@@ -42,7 +50,8 @@ commandResult* buildCommandResult(int success, char* resultString) {
     newCommandResult->exitCode = -1;
     newCommandResult->fatal = FALSE;
     newCommandResult->success = success;
-    newCommandResult->resultMessage = resultString;
+    newCommandResult->resultMessage = Malloc(((strlen(resultString) + 1) * sizeof(char)), "");
+    strcpy(newCommandResult->resultMessage, resultString);
 
     return newCommandResult;
 }
@@ -65,7 +74,9 @@ commandResult* buildFatalCommandResult(int success, char* errorMessage, int exit
     newCommandResult->exitCode = exitCode;
     newCommandResult->fatal = TRUE;
     newCommandResult->success = success;
-    newCommandResult->resultMessage = errorMessage;
+
+    newCommandResult->resultMessage = Malloc(((strlen(errorMessage) + 1) * sizeof(char)), "");
+    strcpy(newCommandResult->resultMessage, errorMessage);
 
     return newCommandResult;
 }
