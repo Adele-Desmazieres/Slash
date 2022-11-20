@@ -24,8 +24,8 @@ void readResult(command* command, commandResult* commandResult) {
     resetPrintColor();
 }
 
-commandResult* commandProcessHandler(command* command) {    
-    if ( strcmp(command->name, "exit") == 0 ) return exitCommandRunner(command);
+commandResult* commandProcessHandler(command* command, int lastCommandState) {    
+    if ( strcmp(command->name, "exit") == 0 ) return exitCommandRunner(command, lastCommandState);
     if ( strcmp(command->name, "cd") == 0 ) return cdCommandRunner(command);
     if ( strcmp(command->name, "pwd") == 0 ) return pwdCommandRunner(command);
     //TO-DO : cas des commandes externes
@@ -59,8 +59,7 @@ int main(int argc, char *argv[]) {
     //Boucle principale
     while ((line = readline(printPrompt(returnValue, getenv("PWD")))) != NULL) {
         char** parsedLine;
-        add_history(line); 
-
+        add_history(line);
         printf("displayed : %s\n", line);
 
         // parser la ligne (mots et opérateurs séparés par des espaces)
@@ -78,7 +77,7 @@ int main(int argc, char *argv[]) {
         command* commande = buildCommand(parsedLine, nbrArgs);
         
 
-        commandResult* result = commandProcessHandler(commande);
+        commandResult* result = commandProcessHandler(commande, returnValue);
 
         freeParsedLine(parsedLine, nbrArgs);
 
@@ -94,6 +93,11 @@ int main(int argc, char *argv[]) {
         free(result);
 
     }
-    
-    return 1;
+
+    /*étant donné que exit ne fait qu'utiliser la fonction exit(), qui est ici, dans le main, 
+    équivalente à un return. Si un utilisateur presse les touche Ctrl+D, il arrivera ici et le
+    programme terminera avec la valeur de retour de la dernière commande entrée. Tout comme exit
+    sans argument le ferait.
+    */
+    return returnValue;
 }
