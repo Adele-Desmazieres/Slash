@@ -16,7 +16,7 @@ Node* newNode(char* str) {
 		free(ret);
 		perror("2");
 	}
-	
+
 	strcpy(ret->content, str);
 	ret->prev = NULL;
 	return ret;
@@ -49,6 +49,7 @@ void freeStack(Stack* p) {
 
 void push(Stack* p, char* str) {
 	Node* n = newNode(str);
+	//free(str);
 	if (p->length == 0){
 		p->head = n; 
 		p->length++; 
@@ -71,7 +72,7 @@ char* pop(Stack* p) {
 	Node* n = p->head;
 	char* ret = n->content;
 	p->length--;
-	if (p->length == 0){
+	if (p->length == 0) {
 		p->head = NULL; 
 	} else {
 		p->head = n->prev;

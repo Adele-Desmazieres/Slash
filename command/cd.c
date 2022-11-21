@@ -52,6 +52,25 @@ commandResult* setTargetToDirectory(command* command, char* target) {
 	return cdTarget(command);	
 }
 
+void myprint(char *str)
+{
+    int n = 0;
+    do
+    {
+        printf("str[%d]=", n++);
+        switch(*str)
+        {
+            case '\0':
+                printf("`\\0`\n");
+                break;
+            default:
+                if(isprint((unsigned char) *str))
+                    printf("'%c'\n", *str);
+                else
+                    printf("'\\x%02hhx'\n", *str);
+        }
+    }while(*str++);
+}
 
 /* Sépare le string "path" en tokens de string délimités par '/' 
  * place chaque token dans la pile s en argument.
@@ -61,20 +80,27 @@ Stack* split(Stack* s, char* path, int forward) {
 	// copie du path en argument pour éviter de le modifier
 	char* pathCopy = malloc(sizeof(char) * (strlen(path) + 1));
 	if (pathCopy == NULL) perror("malloc\n");
-	strcpy(pathCopy, path);
 	
-	char* pointeur = strtok(pathCopy, "/");
+	if (path[0] == '/') strcpy(pathCopy, path+1);
+	else strcpy(pathCopy, path);
+	//strcpy(pathCopy, path);
+	
+	char* pointeur = strsep(&pathCopy, "/");
 	
 	while (pointeur != NULL) {
+		//myprint(pointeur);
+		//printf("%s\n", pointeur);
 		push(s, pointeur);
-		pointeur = strtok(NULL, "/");
+		pointeur = strsep(&pathCopy, "/");
 	}
 	
+	free(pathCopy);
+	free(pointeur);
+
 	if (!forward) {
 		s = reverseStack(s);
 	}
-	free(pathCopy);
-	
+		
 	return s;
 }
 
@@ -89,22 +115,25 @@ char* buildTargetDirectory(command* command, char* relativeLogicalTarget, int re
 	Stack *sLongTarget = newStack();
 	sLongTarget = split(sLongTarget, relativeLogicalTarget, FALSE);
 	
+	char* tmp;
 	char* token;
 	//printf(" - empilement - \n");
 	
 	// rempli la pile du chemin actuel avec les rep du chemin ciblé
 	while ((token = pop(sLongTarget))) { // parcourir les tokens du string chemin, séparés par des /
 		
-		//printf("popRel : %s\n", token);
-		
 		if (strcmp(token, "..") == 0) {
-			pop(sCurrent);
-			//printf("   popCur : %s\n", pop(sCurrent));
+			tmp = pop(sCurrent);
+			free(token);
+			free(tmp);
+
 		} else if (strcmp(token, ".") == 0) {
+			free(token);
 			continue;
+
 		} else {
-			//printf("   pushCur : %s\n", token);
 			push(sCurrent, token);
+			free(token);
 		}
 	}
 	
