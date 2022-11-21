@@ -33,7 +33,9 @@ commandResult* commandProcessHandler(command* command, int lastCommandState) {
     //Commande inconnue
     char* errMsg = malloc(20 * sizeof(char));
     strcpy(errMsg, "Command unknown.\n");
-    return buildCommandResult(FALSE, errMsg);
+    commandResult* finalRes = buildCommandResult(FALSE, errMsg);
+    free(errMsg);
+    return finalRes;
 }
 
 int main(int argc, char *argv[]) {

@@ -3,6 +3,7 @@
 #include <unistd.h>
 #include "./cd.h"
 #include "../utils/command.h"
+#include "../utils/memory.h"
 #include "../utils/printing.h"
 #include "../utils/stack.h"
 
@@ -51,6 +52,7 @@ commandResult* cdTarget(command* command) {
 
 /* Set le target directory puis appelle la fonction de chgt de directory. */
 commandResult* setTargetToDirectory(command* command, char* target) {
+	if (command->targetRef) free(command->targetRef);
 	command->targetRef = malloc(sizeof(char) * (strlen(target) + 1));
 	if (command->targetRef == NULL) {
 		free(target);
@@ -194,6 +196,7 @@ commandResult* cdLogical(command* command, char* target) {
 	// si échec en logique, alors cd en physique
 	if (!ret->success) {
 		command->logicalRef = FALSE;
+		freeCommandResult(ret);
 		ret = setTargetToDirectory(command, target);
 	}
 	
@@ -240,7 +243,9 @@ commandResult* cdCommandRunner(command* command) {
 				
 			} else { // cd path/to/directory
 				command->logicalRef = TRUE;
-				commandResult = cdLogical(command, command->args[1]); // si "cd path" sans option, alors logical
+				char* tmp = Malloc(strlen(command->args[1])*sizeof(char)+1, "");
+				strcpy(tmp, command->args[1]);
+				commandResult = cdLogical(command, tmp); // si "cd path" sans option, alors logical
 			}
 			break;
 		
@@ -248,10 +253,12 @@ commandResult* cdCommandRunner(command* command) {
 		case 3 :
 			//command->targetRef = command->args[2];
 			if (strcmp(command->args[1], "-L" ) == 0) {
-				commandResult = cdLogical(command, command->args[2]); 
+				char* tmp = Malloc(strlen(command->args[1])*sizeof(char)+1, "");
+				strcpy(tmp, command->args[1]);
+				commandResult = cdLogical(command, tmp); 
 			} else if (strcmp(command->args[1], "-P" ) == 0) {
 				command->logicalRef = FALSE;
-				char* tmp = malloc(strlen(command->args[2])*sizeof(char)+1);
+				char* tmp = Malloc(strlen(command->args[2])*sizeof(char)+1, "");
 				strcpy(tmp, command->args[2]);
 				commandResult = setTargetToDirectory(command, tmp);
 			} else {
