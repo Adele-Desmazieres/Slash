@@ -60,7 +60,7 @@ void printParsed(char ** parsed, int len){
 }
 
 void freeParsedLine(char** parsedLine, int parseLineLength) {
-    for (int i = 0; i < 0; i++) {
+    for (int i = 0; i < parseLineLength; i++) {
         free(parsedLine[i]);
     }
     free(parsedLine);

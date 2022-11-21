@@ -84,4 +84,10 @@ commandResult* buildFatalCommandResult(int success, char* errorMessage, int exit
     return newCommandResult;
 }
 
+void freeCommandResult (commandResult* c){
+    free(c->resultMessage);
+    free(c);
+    return;
+}
+
 #endif

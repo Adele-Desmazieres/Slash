@@ -11,8 +11,10 @@
 
 /* CAS PHYSIQUE (-P) */
 commandResult* pwdPhysical(command* command) {
-
-    return buildCommandResult(TRUE, getcwd(NULL,0));
+    char* cwd = getcwd(NULL,0);
+    commandResult* result = buildCommandResult(TRUE, cwd);
+    free(cwd);
+    return result;
 }
 /* **************** */
 

@@ -1,3 +1,4 @@
+#include "./command.h"
 
 typedef struct Node Node;
 
@@ -21,4 +22,3 @@ void push(Stack* p, char* str);
 char* peek(Stack* p);
 char* pop(Stack* p);
 Stack* reverseStack(Stack* s1);
-

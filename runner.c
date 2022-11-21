@@ -21,7 +21,7 @@ void readResult(command* command, commandResult* commandResult) {
     }
     if (commandResult->resultMessage) {
         printf("%s\n", commandResult->resultMessage);
-        //resetPrintColor();
+        resetPrintColor();
     }
 }
 
@@ -48,7 +48,7 @@ int main(int argc, char *argv[]) {
 
 
     int returnValue = 0; 
-    char* line      = Malloc(sizeof(char) * MAX_ARGS_STRLEN, "");
+    char* line;
     // a mettre à jour avec chaque appel à cd ; PATH_MAX / 4 car PATH_MAX / 2 trop grand
 
 
@@ -58,10 +58,12 @@ int main(int argc, char *argv[]) {
 
     //printPrompt(returnValue, getenv("PWD"))
     //Boucle principale
-    while ((line = readline(printPrompt(returnValue, getenv("PWD")))) != NULL) {
+    char* prompt;
+    while (( line = readline((prompt = printPrompt(returnValue, getenv("PWD"))))) != NULL) {
+        free(prompt);
         char** parsedLine;
         add_history(line);
-        //printf("displayed : %s\n", line);
+        printf("displayed : %s\n", line);
 
         // parser la ligne (mots et opérateurs séparés par des espaces)
         
@@ -84,16 +86,20 @@ int main(int argc, char *argv[]) {
 
 
         if (result->fatal == TRUE) { 
-            freeCommand(commande); 
-            exit(result->exitCode); 
+            freeCommand(commande);
+            int exitCode = result->exitCode;
+            freeCommandResult(result); 
+            free(line);
+            return exitCode; 
         }
 
         readResult(commande, result);
         freeCommand(commande);
         returnValue = (result->success == TRUE) ? 0 : 1;
-        free(result);
-
+        freeCommandResult(result);
+        free(line);
     }
+
 
     /*étant donné que exit ne fait qu'utiliser la fonction exit(), qui est ici, dans le main, 
     équivalente à un return. Si un utilisateur presse les touche Ctrl+D, il arrivera ici et le
