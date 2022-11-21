@@ -32,7 +32,7 @@ commandResult* cdTarget(command* command) {
 		if (command->logicalRef) error += setenv("PWD", command->targetRef, 1); // le chemin donné en argument
 		else error += setenv("PWD", tmp, 1); // le chemin renvoyé par getcwd
 		
-		if (error == 0) return buildCommandResult(TRUE, tmp);
+		if (error == 0) return buildCommandResult(TRUE, NULL);
 		else res = buildFatalCommandResult(FALSE, "setenv échoué", 1);
 		
 	} else {
@@ -52,6 +52,25 @@ commandResult* setTargetToDirectory(command* command, char* target) {
 	return cdTarget(command);	
 }
 
+void myprint(char *str)
+{
+    int n = 0;
+    do
+    {
+        printf("str[%d]=", n++);
+        switch(*str)
+        {
+            case '\0':
+                printf("`\\0`\n");
+                break;
+            default:
+                if(isprint((unsigned char) *str))
+                    printf("'%c'\n", *str);
+                else
+                    printf("'\\x%02hhx'\n", *str);
+        }
+    }while(*str++);
+}
 
 /* Sépare le string "path" en tokens de string délimités par '/' 
  * place chaque token dans la pile s en argument.
@@ -61,19 +80,27 @@ Stack* split(Stack* s, char* path, int forward) {
 	// copie du path en argument pour éviter de le modifier
 	char* pathCopy = malloc(sizeof(char) * (strlen(path) + 1));
 	if (pathCopy == NULL) perror("malloc\n");
-	strcpy(pathCopy, path);
 	
-	char* pointeur = strtok(pathCopy, "/");
+	if (path[0] == '/') strcpy(pathCopy, path+1);
+	else strcpy(pathCopy, path);
+	//strcpy(pathCopy, path);
+	
+	char* pointeur = strsep(&pathCopy, "/");
 	
 	while (pointeur != NULL) {
+		//myprint(pointeur);
+		//printf("%s\n", pointeur);
 		push(s, pointeur);
-		pointeur = strtok(NULL, "/");
+		pointeur = strsep(&pathCopy, "/");
 	}
 	
+	free(pathCopy);
+	free(pointeur);
+
 	if (!forward) {
 		s = reverseStack(s);
 	}
-	
+		
 	return s;
 }
 
@@ -88,22 +115,25 @@ char* buildTargetDirectory(command* command, char* relativeLogicalTarget, int re
 	Stack *sLongTarget = newStack();
 	sLongTarget = split(sLongTarget, relativeLogicalTarget, FALSE);
 	
+	char* tmp;
 	char* token;
 	//printf(" - empilement - \n");
 	
 	// rempli la pile du chemin actuel avec les rep du chemin ciblé
 	while ((token = pop(sLongTarget))) { // parcourir les tokens du string chemin, séparés par des /
 		
-		//printf("popRel : %s\n", token);
-		
 		if (strcmp(token, "..") == 0) {
-			pop(sCurrent);
-			//printf("   popCur : %s\n", pop(sCurrent));
+			tmp = pop(sCurrent);
+			free(token);
+			free(tmp);
+
 		} else if (strcmp(token, ".") == 0) {
+			free(token);
 			continue;
+
 		} else {
-			//printf("   pushCur : %s\n", token);
 			push(sCurrent, token);
+			free(token);
 		}
 	}
 	
@@ -149,13 +179,22 @@ char* buildTargetDirectory(command* command, char* relativeLogicalTarget, int re
 // TODO : si cd logique failed, tester en physique
 commandResult* cdLogical(command* command, char* target) {
 	char first = target[0];
+	commandResult* ret;
 	
 	if (first == '/') { // si commence par un / alors chemin absolu
-		return setTargetToDirectory(command, buildTargetDirectory(command, target, FALSE));
+		ret = setTargetToDirectory(command, buildTargetDirectory(command, target, FALSE));
 	
 	} else { // sinon on a un chemin relatif
-		return setTargetToDirectory(command, buildTargetDirectory(command, target, TRUE));
+		ret =  setTargetToDirectory(command, buildTargetDirectory(command, target, TRUE));
 	}
+		
+	// si échec en logique, alors cd en physique
+	if (!ret->success) {
+		command->logicalRef = FALSE;
+		ret = setTargetToDirectory(command, target);
+	}
+	
+	return ret;
 }
 
 
@@ -193,7 +232,7 @@ commandResult* cdCommandRunner(command* command) {
 		// "cd -" -> OLDPWD OR "cd path/to/directory"
 		case 2 : 
 			if (strcmp(command->args[1], "-") == 0) {
-				command->logicalRef = FALSE;
+				command->logicalRef = TRUE;
 				commandResult = setTargetToEnvVar(command, "OLDPWD"); 
 				
 			} else { // cd path/to/directory

@@ -12,10 +12,10 @@
 char* reducePathPromptLenght() {
     char* currPath = malloc (sizeof(char) * (strlen(getenv("PWD")) + 1));
     strcpy (currPath, getenv("PWD"));
-    if (strlen(currPath) < 30) return currPath;
+    if (strlen(currPath) < 25) return currPath;
     char* reducedPath = calloc(sizeof(char) * 31, sizeof(char));
     strcat(reducedPath, "...");
-    char* keptPart = (char*) currPath + strlen(currPath) - 27;
+    char* keptPart = (char*) currPath + strlen(currPath) - 22;
     strcat(reducedPath, keptPart);
     return reducedPath;
 }
@@ -66,17 +66,17 @@ void printError(char* message) {
  * @param path the path of the current directory
  */
 char* printPrompt(int lastCommandResult, char* path) {
-    char* tmp = malloc(sizeof(char)*63);
+    char* tmp = malloc(sizeof(char)*46);
 
     char* pathToPrint = path;
-    if (strlen(path) > 30) {
+    if (strlen(path) > 25) {
         pathToPrint = reducePathPromptLenght(path);
     }
 
     if (lastCommandResult == 1) {
-        snprintf(tmp, 63, "\033[0m[\033[91m%d\033[0m]\033[34m%s\033[36m$ \033[0m", lastCommandResult, pathToPrint);
-    }else {
-        snprintf(tmp, 63, "\033[0m[\033[32m%d\033[0m]\033[34m%s\033[36m$ \033[0m", lastCommandResult, pathToPrint);
+        snprintf(tmp, 46, "\033[91m[%d]\033[34m%s\033[00m$ ", lastCommandResult, pathToPrint);
+    } else {
+        snprintf(tmp, 46, "\033[32m[%d]\033[34m%s\033[00m$ ", lastCommandResult, pathToPrint);
     }
 
     return tmp;
