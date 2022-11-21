@@ -56,7 +56,6 @@ commandResult* setTargetToDirectory(command* command, char* target) {
 		free(target);
 		return buildFatalCommandResult(FALSE, "malloc échoué", 1);
 	}
-	
 	strcpy(command->targetRef, target);
 	free(target);
 	return cdTarget(command);	
@@ -252,7 +251,9 @@ commandResult* cdCommandRunner(command* command) {
 				commandResult = cdLogical(command, command->args[2]); 
 			} else if (strcmp(command->args[1], "-P" ) == 0) {
 				command->logicalRef = FALSE;
-				commandResult = setTargetToDirectory(command, command->args[2]); 
+				char* tmp = malloc(strlen(command->args[2])*sizeof(char)+1);
+				strcpy(tmp, command->args[2]);
+				commandResult = setTargetToDirectory(command, tmp);
 			} else {
 				commandResult = buildCommandResult(FALSE, "Invalid argument for the command cd. Expected command format : cd [-L | -P | - ] [ref].\n");
 			}

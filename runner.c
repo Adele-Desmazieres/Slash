@@ -21,7 +21,6 @@ void readResult(command* command, commandResult* commandResult) {
     }
     if (commandResult->resultMessage) {
         printf("%s\n", commandResult->resultMessage);
-        resetPrintColor();
     }
 }
 
