@@ -32,7 +32,7 @@ commandResult* cdTarget(command* command) {
 		if (command->logicalRef) error += setenv("PWD", command->targetRef, 1); // le chemin donné en argument
 		else error += setenv("PWD", tmp, 1); // le chemin renvoyé par getcwd
 		
-		if (error == 0) return buildCommandResult(TRUE, tmp);
+		if (error == 0) return buildCommandResult(TRUE, NULL);
 		else res = buildFatalCommandResult(FALSE, "setenv échoué", 1);
 		
 	} else {
@@ -73,6 +73,7 @@ Stack* split(Stack* s, char* path, int forward) {
 	if (!forward) {
 		s = reverseStack(s);
 	}
+	free(pathCopy);
 	
 	return s;
 }
@@ -149,13 +150,22 @@ char* buildTargetDirectory(command* command, char* relativeLogicalTarget, int re
 // TODO : si cd logique failed, tester en physique
 commandResult* cdLogical(command* command, char* target) {
 	char first = target[0];
+	commandResult* ret;
 	
 	if (first == '/') { // si commence par un / alors chemin absolu
-		return setTargetToDirectory(command, buildTargetDirectory(command, target, FALSE));
+		ret = setTargetToDirectory(command, buildTargetDirectory(command, target, FALSE));
 	
 	} else { // sinon on a un chemin relatif
-		return setTargetToDirectory(command, buildTargetDirectory(command, target, TRUE));
+		ret =  setTargetToDirectory(command, buildTargetDirectory(command, target, TRUE));
 	}
+		
+	// si échec en logique, alors cd en physique
+	if (!ret->success) {
+		command->logicalRef = FALSE;
+		ret = setTargetToDirectory(command, target);
+	}
+	
+	return ret;
 }
 
 
@@ -193,7 +203,7 @@ commandResult* cdCommandRunner(command* command) {
 		// "cd -" -> OLDPWD OR "cd path/to/directory"
 		case 2 : 
 			if (strcmp(command->args[1], "-") == 0) {
-				command->logicalRef = FALSE;
+				command->logicalRef = TRUE;
 				commandResult = setTargetToEnvVar(command, "OLDPWD"); 
 				
 			} else { // cd path/to/directory

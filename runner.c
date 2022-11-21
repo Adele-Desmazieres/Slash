@@ -19,9 +19,10 @@ void readResult(command* command, commandResult* commandResult) {
         printError(commandResult->resultMessage);
         return;
     }
-
-    printf("%s\n", commandResult->resultMessage);
-    resetPrintColor();
+    if (commandResult->resultMessage) {
+        printf("%s\n", commandResult->resultMessage);
+        //resetPrintColor();
+    }
 }
 
 commandResult* commandProcessHandler(command* command, int lastCommandState) {    
@@ -60,7 +61,7 @@ int main(int argc, char *argv[]) {
     while ((line = readline(printPrompt(returnValue, getenv("PWD")))) != NULL) {
         char** parsedLine;
         add_history(line);
-        printf("displayed : %s\n", line);
+        //printf("displayed : %s\n", line);
 
         // parser la ligne (mots et opérateurs séparés par des espaces)
         

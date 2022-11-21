@@ -50,8 +50,11 @@ commandResult* buildCommandResult(int success, char* resultString) {
     newCommandResult->exitCode = -1;
     newCommandResult->fatal = FALSE;
     newCommandResult->success = success;
-    newCommandResult->resultMessage = Malloc(((strlen(resultString) + 1) * sizeof(char)), "");
-    strcpy(newCommandResult->resultMessage, resultString);
+    newCommandResult->resultMessage = NULL;
+    if(resultString) {
+        newCommandResult->resultMessage = Malloc(((strlen(resultString) + 1) * sizeof(char)), "");
+        strcpy(newCommandResult->resultMessage, resultString);
+    }
 
     return newCommandResult;
 }

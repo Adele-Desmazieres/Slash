@@ -12,7 +12,10 @@ Node* newNode(char* str) {
 	if (ret == NULL) perror("1");
 	
 	ret->content = malloc(sizeof(char) * (strlen(str) + 1) );
-	if (ret->content == NULL) perror("2");
+	if (ret->content == NULL) {
+		free(ret);
+		perror("2");
+	}
 	
 	strcpy(ret->content, str);
 	ret->prev = NULL;
