@@ -119,6 +119,7 @@ char* buildTargetDirectory(command* command, char* relativeLogicalTarget, int re
 
 	Stack *sLongTarget = newStack();
 	sLongTarget = split(sLongTarget, relativeLogicalTarget, FALSE);
+
 	
 	char* tmp;
 	char* token;
@@ -198,6 +199,8 @@ commandResult* cdLogical(command* command, char* target) {
 		command->logicalRef = FALSE;
 		freeCommandResult(ret);
 		ret = setTargetToDirectory(command, target);
+	}else {
+		free(target);
 	}
 	
 	return ret;
@@ -253,8 +256,8 @@ commandResult* cdCommandRunner(command* command) {
 		case 3 :
 			//command->targetRef = command->args[2];
 			if (strcmp(command->args[1], "-L" ) == 0) {
-				char* tmp = Malloc(strlen(command->args[1])*sizeof(char)+1, "");
-				strcpy(tmp, command->args[1]);
+				char* tmp = Malloc(strlen(command->args[2])*sizeof(char)+1, "");
+				strcpy(tmp, command->args[2]);
 				commandResult = cdLogical(command, tmp); 
 			} else if (strcmp(command->args[1], "-P" ) == 0) {
 				command->logicalRef = FALSE;
