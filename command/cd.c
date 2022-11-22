@@ -63,25 +63,6 @@ commandResult* setTargetToDirectory(command* command, char* target) {
 	return cdTarget(command);	
 }
 
-void myprint(char *str)
-{
-    int n = 0;
-    do
-    {
-        printf("str[%d]=", n++);
-        switch(*str)
-        {
-            case '\0':
-                printf("`\\0`\n");
-                break;
-            default:
-                if(isprint((unsigned char) *str))
-                    printf("'%c'\n", *str);
-                else
-                    printf("'\\x%02hhx'\n", *str);
-        }
-    }while(*str++);
-}
 
 /* Sépare le string "path" en tokens de string délimités par '/' 
  * place chaque token dans la pile s en argument.
@@ -98,7 +79,6 @@ Stack* split(Stack* s, char* path, int forward) {
 	char* pointeur = strsep(&tmp, "/");
 	
 	while (pointeur != NULL) {
-		//myprint(pointeur);
 		//printf("%s\n", pointeur);
 		push(s, pointeur);
 		pointeur = strsep(&tmp, "/");

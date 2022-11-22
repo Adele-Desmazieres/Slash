@@ -64,7 +64,7 @@ int main(int argc, char *argv[]) {
         free(prompt);
         char** parsedLine;
         add_history(line);
-        printf("displayed : %s\n", line);
+        //printf("displayed : %s\n", line);
 
         // parser la ligne (mots et opérateurs séparés par des espaces)
         
