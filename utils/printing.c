@@ -15,8 +15,10 @@ char* reducePathPromptLenght() {
     if (strlen(currPath) < 25) return currPath;
     char* reducedPath = calloc(sizeof(char) * 31, sizeof(char));
     strcat(reducedPath, "...");
-    char* keptPart = (char*) currPath + strlen(currPath) - 22;
+    //-3 à cause des point de suspension devant
+    char* keptPart = (char*) currPath + strlen(currPath) - (MAX_PATH_PROMPT_LENGTH - 3);
     strcat(reducedPath, keptPart);
+    free(currPath);
     return reducedPath;
 }
 
@@ -67,17 +69,20 @@ void printError(char* message) {
  */
 char* printPrompt(int lastCommandResult, char* path) {
     char* tmp = malloc(sizeof(char)*46);
-
+    int reduced = 0;
     char* pathToPrint = path;
-    if (strlen(path) > 25) {
+    if (strlen(path) > MAX_PATH_PROMPT_LENGTH) {
+        reduced = 1;
         pathToPrint = reducePathPromptLenght(path);
     }
 
     if (lastCommandResult == 1) {
         snprintf(tmp, 46, "\033[91m[%d]\033[34m%s\033[00m$ ", lastCommandResult, pathToPrint);
-    } else {
+    }else {
         snprintf(tmp, 46, "\033[32m[%d]\033[34m%s\033[00m$ ", lastCommandResult, pathToPrint);
     }
+
+    if(reduced) free(pathToPrint);
 
     return tmp;
 }

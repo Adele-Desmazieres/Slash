@@ -2,14 +2,14 @@
 #include <string.h>
 #include <stdio.h>
 #include "stack.h"
+#include "memory.h"
 
 int isEmpty(Stack* p) {
 	return p->length == 0;
 }
 
 Node* newNode(char* str) {
-	Node* ret = malloc(sizeof(Node));
-	if (ret == NULL) perror("1");
+	Node* ret = Malloc(sizeof(Node), "1");
 	
 	ret->content = malloc(sizeof(char) * (strlen(str) + 1) );
 	if (ret->content == NULL) {
@@ -51,7 +51,7 @@ void push(Stack* p, char* str) {
 	Node* n = newNode(str);
 	//free(str);
 	if (p->length == 0){
-		p->head = n; 
+		p->head = n;
 		p->length++; 
 	} else {
 		n->prev = p->head;
@@ -87,7 +87,9 @@ Stack* reverseStack(Stack* s1) {
 	while (!isEmpty(s1)) {
 		pointeur = pop(s1);
 		push(s2, pointeur);
+		free(pointeur);
 	}
+	freeStack(s1);
 	return s2;
 }
 
