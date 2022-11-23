@@ -98,7 +98,7 @@ char** jokerSimple(const char* str){
     int iterator = 0;
 
     while ((de = readdir(dir)) != NULL ){
-        if ( strcmp(de->d_name, ".") != 0 && strcmp(de->d_name,"..") != 0 && isSuffix(de->d_name, suffix) ){
+        if ( de->d_name[0]!='.' && isSuffix(de->d_name, suffix) ){
             ret[iterator] = malloc (sizeof(char) * (1+ strlen( strcat(truncPath, de->d_name))) );
             if (ret[iterator] == NULL) perror ("malloc joker simple 2");
             ret[iterator++] = strcat(truncPath, de->d_name); 
@@ -113,17 +113,3 @@ char** jokerSimple(const char* str){
 
 
 }
-
-
-/*
-int main(void){
-    printf(" abc.c, .c : %d\n", isSuffix("abc.c", ".c"));
-    printf(" abc.c, e.h : %d\n", isSuffix("abc.c", "e.h"));
-    printf(" hello.md, .md : %d\n", isSuffix("hello.md", ".md"));
-
-    printf("\n");
-
-    printf ("Tronque aaaaab/*lol.c : %s\n", truncatePath("aaaaa/lol.c"));
-    printf ("getSuffix aaaaab/*lol.c : %s\n", getSuffix("aaaaa/lol.c"));
-}
-*/
