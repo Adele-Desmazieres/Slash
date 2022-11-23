@@ -55,13 +55,29 @@ char** parseLine(const char* line, char** parsedLine) {
     return parsedLine;
 }
 
+char** addFinalNull(char** parsedLine, int size) {
+    parsedLine = realloc(parsedLine, (size+1)*sizeof(char*));
+    parsedLine[size] = NULL;
+    return parsedLine;
+}
+
 void printParsed(char ** parsed, int len){
-    for(int i = 0; i < len; i++) printf(" argument %d : %s \n", i+1, parsed[i]);
+    for(int i = 0; i < len; i++) {
+        if(parsed[i] == NULL) {
+            printf(" | argument %d : NULL", i+1); 
+            continue;
+        }
+        printf(" | argument %d : %s \n", i+1, parsed[i]);
+    }
 }
 
 void freeParsedLine(char** parsedLine, int parseLineLength) {
     for (int i = 0; i < parseLineLength; i++) {
-        free(parsedLine[i]);
+        if(parsedLine[i] != NULL) {
+            free(parsedLine[i]);
+        }else {
+            printf(" | argument %d : %s \n", i+1, parsedLine[i]);
+        }
     }
     free(parsedLine);
 }

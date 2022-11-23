@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <sys/wait.h>
+#include <sys/types.h>
 #include <readline/readline.h>
 #include <readline/history.h>
 #include "runner.h"
@@ -24,17 +26,25 @@ void readResult(command* command, commandResult* commandResult) {
     }
 }
 
-commandResult* commandProcessHandler(command* command, int lastCommandState) {    
+commandResult* commandProcessHandler(command* command, int lastCommandState) {   
+    pid_t r;
+    int result; 
     if ( strcmp(command->name, "exit") == 0 ) return exitCommandRunner(command, lastCommandState);
     if ( strcmp(command->name, "cd") == 0 ) return cdCommandRunner(command);
     if ( strcmp(command->name, "pwd") == 0 ) return pwdCommandRunner(command);
     //TO-DO : cas des commandes externes
-
+    switch(r = fork()) {
+        case -1: break;
+        case 0: dup2(STDOUT_FILENO, STDERR_FILENO);
+                execvp(command->name, addFinalNull(command->args, command->argNumber));
+                break;
+        default: 
+                waitpid(r, &result, 0);
+                int tempReturnValue = (WEXITSTATUS(result)) ? 1 : 0;
+                return buildCommandResult(!tempReturnValue, NULL);
+    }
     //Commande inconnue
-    char* errMsg = malloc(20 * sizeof(char));
-    strcpy(errMsg, "Command unknown.\n");
-    commandResult* finalRes = buildCommandResult(FALSE, errMsg);
-    free(errMsg);
+    commandResult* finalRes = buildCommandResult(FALSE, "Command unknown.\n");
     return finalRes;
 }
 
