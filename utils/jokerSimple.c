@@ -53,6 +53,10 @@ char* getSuffix(const char* path){
     }
 
     if(*tmp == '\0' || *(tmp+1) == '\0') { free(tmp); return NULL; }
+    if (*(tmp+1) == '*' && *(tmp+2) == '\0'){
+        free(tmp);
+        return "*";
+    }
 
     tmp -= acc;
     acc+=2;
@@ -74,7 +78,7 @@ char* getSuffix(const char* path){
 //Renvoie NULL si pas de joker detecté dans str
 char** jokerSimple(const char* str){
 
-    
+    int all = 0;
 
     // tronquer le chemin pour avoir le parent de la destination ! déjà Malloc !
     char* truncPath = truncatePath(str);
@@ -82,6 +86,7 @@ char** jokerSimple(const char* str){
     // trouver le suffixe voulu ! déjà Malloc !
     char* suffix = getSuffix(str);
     if(suffix == NULL) return NULL;
+    if (strcmp(suffix, "*") == 0) all = 1;
 
     int nbrOfEntries = 0;
 
@@ -89,7 +94,7 @@ char** jokerSimple(const char* str){
     DIR* dir;
     if ((dir = opendir(truncPath)) == NULL) return NULL;
     while ((de = readdir(dir)) != NULL ){
-        if ( strcmp(de->d_name, ".") != 0 && strcmp(de->d_name,"..") != 0 && isSuffix(de->d_name, suffix) ) nbrOfEntries++;
+        if ( strcmp(de->d_name, ".") != 0 && strcmp(de->d_name,"..") != 0 && (all || isSuffix(de->d_name, suffix)) ) nbrOfEntries++;
     }
     rewinddir(dir);
 
@@ -98,7 +103,7 @@ char** jokerSimple(const char* str){
     int iterator = 0;
 
     while ((de = readdir(dir)) != NULL ){
-        if ( de->d_name[0]!='.' && isSuffix(de->d_name, suffix) ){
+        if ( de->d_name[0]!='.' && (all || isSuffix(de->d_name, suffix)) ){
             ret[iterator] = malloc (sizeof(char) * (1+ strlen( strcat(truncPath, de->d_name))) );
             if (ret[iterator] == NULL) perror ("malloc joker simple 2");
             ret[iterator++] = strcat(truncPath, de->d_name); 
@@ -106,7 +111,7 @@ char** jokerSimple(const char* str){
     }
     closedir(dir);
 
-    free(suffix);
+    if (all == 0) free(suffix);
     free(truncPath);
 
     return ret;
