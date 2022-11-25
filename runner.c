@@ -37,9 +37,10 @@ commandResult* commandProcessHandler(command* command, int lastCommandState) {
         case -1: break;
         case 0: dup2(STDOUT_FILENO, STDERR_FILENO);
                 execvp(command->name, addFinalNull(command->args, command->argNumber));
-                break;
+                exit(127);
         default: 
                 waitpid(r, &result, 0);
+                if (WEXITSTATUS(result) == 127) break;
                 int tempReturnValue = (WEXITSTATUS(result)) ? 1 : 0;
                 return buildCommandResult(!tempReturnValue, NULL);
     }
@@ -92,18 +93,15 @@ int main(int argc, char *argv[]) {
         
 
         commandResult* result = commandProcessHandler(commande, returnValue);
-
         freeParsedLine(parsedLine, nbrArgs);
-
 
         if (result->fatal == TRUE) { 
             freeCommand(commande);
             int exitCode = result->exitCode;
             freeCommandResult(result); 
             free(line);
-            return exitCode; 
+            return exitCode;
         }
-
         readResult(commande, result);
         freeCommand(commande);
         returnValue = (result->success == TRUE) ? 0 : 1;
