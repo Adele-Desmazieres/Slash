@@ -3,6 +3,15 @@
 #include <stdlib.h>
 #include <sys/types.h>
 #include <dirent.h>
+#include "jokerSimple.h"
+
+int containsSimpleJoker (const char* path){
+    while(*path != '\0'){
+        if(*path == '/' && *(path+1) != '\0' && *(path+1) == '*' ) return 1;
+        path++;
+    }
+    return 0;
+}
 
 
 int isSuffix(const char* str, const char* suffix){
@@ -76,7 +85,7 @@ char* getSuffix(const char* path){
 
 //Renvoie un tableau de String contenant les chemins vers tous les fichiers qui sont étendus par le joker contenu dans str
 //Renvoie NULL si pas de joker detecté dans str
-char** jokerSimple(const char* str){
+pathArray* jokerSimple(const char* str){
 
     int all = 0;
 
@@ -88,6 +97,9 @@ char** jokerSimple(const char* str){
     if(suffix == NULL) return NULL;
     if (strcmp(suffix, "*") == 0) all = 1;
 
+    pathArray* arr = malloc(sizeof(pathArray));
+    if(arr == NULL) perror("Malloc pathArray");
+
     int nbrOfEntries = 0;
 
     struct dirent* de;
@@ -97,6 +109,8 @@ char** jokerSimple(const char* str){
         if ( strcmp(de->d_name, ".") != 0 && strcmp(de->d_name,"..") != 0 && (all || isSuffix(de->d_name, suffix)) ) nbrOfEntries++;
     }
     rewinddir(dir);
+
+    arr->len = nbrOfEntries;
 
     char** ret = malloc(sizeof(char *) * nbrOfEntries);
     if(ret == NULL) perror("malloc joker simple 1");
@@ -114,7 +128,17 @@ char** jokerSimple(const char* str){
     if (all == 0) free(suffix);
     free(truncPath);
 
-    return ret;
+    arr->content = ret;
 
+    return arr;
 
+}
+
+void freePathArray(pathArray* arr){
+    for(int i = 0; i < arr->len; i++){
+        free(arr->content[i]);
+    }
+    free(arr->content);
+
+    free(arr);
 }
