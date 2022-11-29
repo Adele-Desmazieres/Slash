@@ -34,28 +34,30 @@ char* truncatePath(const char* path){
     char* tmp = malloc(sizeof(char) * (strlen(path)+1));
     if(tmp == NULL) perror("Erreur malloc truncatePath() ");
     strcpy(tmp,path);
-    while(*tmp != '\0' && *(tmp+1) != '\0' && !(*tmp == '/' && *(tmp+1) == '*' ) ){
+    while(*tmp != '\0' && *tmp != '*'  ){
         acc++; tmp++;
     }
 
-    if(*tmp == '\0' || *(tmp+1) == '\0') { free(tmp); return NULL; };
+    if(*tmp == '\0') { free(tmp); return NULL; };
 
+    //printf("%s \n", tmp);
     tmp -= acc;
 
-    int len = strlen(tmp);
-
-    if (len > abs(acc)) {
-        tmp[len-acc] = 0;
-    }
+    tmp[acc] = '\0';
 
     return tmp;
 }
 
 char* getSuffix(const char* path){
 
+
+    if(path[strlen(path) - 1] == '*'){
+        char* tmp = malloc(sizeof(char) * 2); tmp = "*"; return tmp;
+    }
+
     int acc = 0;
     char* tmp = malloc(sizeof(char) * (strlen(path)+1));
-    if(tmp == NULL) perror("Erreur malloc truncatePath() ");
+    if(tmp == NULL) perror("Erreur malloc getSuffix ");
     strcpy(tmp,path);
     while(*tmp != '\0' && *(tmp+1) != '\0' && !(*tmp == '/' && *(tmp+1) == '*' ) ){
         acc++; tmp++;
@@ -89,13 +91,15 @@ pathArray* jokerSimple(const char* str){
 
     int all = 0;
 
-    // tronquer le chemin pour avoir le parent de la destination ! déjà Malloc !
-    char* truncPath = truncatePath(str);
-    if(truncatePath == NULL) return NULL;
     // trouver le suffixe voulu ! déjà Malloc !
     char* suffix = getSuffix(str);
     if(suffix == NULL) return NULL;
     if (strcmp(suffix, "*") == 0) all = 1;
+    // tronquer le chemin pour avoir le parent de la destination ! déjà Malloc !
+    char* truncPath = truncatePath(str);
+    if(truncPath == NULL) return NULL;
+    //printf("%s \n", truncPath);
+    
 
     pathArray* arr = malloc(sizeof(pathArray));
     if(arr == NULL) perror("Malloc pathArray");
@@ -106,11 +110,13 @@ pathArray* jokerSimple(const char* str){
     DIR* dir;
     if ((dir = opendir(truncPath)) == NULL) return NULL;
     while ((de = readdir(dir)) != NULL ){
+        //printf("%d test %s\n",isSuffix(de->d_name, suffix), de->d_name);
         if ( strcmp(de->d_name, ".") != 0 && strcmp(de->d_name,"..") != 0 && (all || isSuffix(de->d_name, suffix)) ) nbrOfEntries++;
     }
     rewinddir(dir);
 
     arr->len = nbrOfEntries;
+    //printf("%d : arrLen \n", arr->len);
 
     char** ret = malloc(sizeof(char *) * nbrOfEntries);
     if(ret == NULL) perror("malloc joker simple 1");
@@ -118,14 +124,18 @@ pathArray* jokerSimple(const char* str){
 
     while ((de = readdir(dir)) != NULL ){
         if ( de->d_name[0]!='.' && (all || isSuffix(de->d_name, suffix)) ){
-            ret[iterator] = malloc (sizeof(char) * (1+ strlen( strcat(truncPath, de->d_name))) );
+            //printf("%s \n", de->d_name);
+            ret[iterator] = malloc (sizeof(char) * (1+ strlen(truncPath)+ strlen(de->d_name)) );
             if (ret[iterator] == NULL) perror ("malloc joker simple 2");
-            ret[iterator++] = strcat(truncPath, de->d_name); 
+            //printf("%s   \n", truncPath);
+            strcat(ret[iterator], truncPath); strcat(ret[iterator], de->d_name); 
+            //printf("%s   \n", truncPath);
+            iterator++;
         }
     }
     closedir(dir);
 
-    if (all == 0) free(suffix);
+    if (all == 0) //free(suffix);
     free(truncPath);
 
     arr->content = ret;
@@ -142,3 +152,11 @@ void freePathArray(pathArray* arr){
 
     free(arr);
 }
+
+void printPathArray (pathArray* p){
+    printf(" Array de chemins : \n");
+    for(int i = 0; i < p->len; i++){
+        printf ("%s \n", p->content[i]);
+    }
+}
+
