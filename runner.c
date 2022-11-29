@@ -41,7 +41,10 @@ commandResult* commandProcessHandler(command* command, int lastCommandState) {
         default: 
                 waitpid(r, &result, 0);
                 if (WEXITSTATUS(result) == 127) break;
-                int tempReturnValue = (WEXITSTATUS(result)) ? 1 : 0;
+                int tempReturnValue;
+                if (WEXITSTATUS(result) == 2 || WEXITSTATUS(result) == 15) 
+                    tempReturnValue = 255;
+                else tempReturnValue = (WEXITSTATUS(result)) ? 1 : 0;
                 return buildCommandResult(!tempReturnValue, NULL);
     }
     //Commande inconnue
@@ -50,7 +53,8 @@ commandResult* commandProcessHandler(command* command, int lastCommandState) {
 }
 
 int main(int argc, char *argv[]) {
-
+    signal(SIGINT, SIG_IGN);
+    signal(SIGTERM, SIG_IGN);
     //Init. de $PATH
     char* currPathTmp = malloc(PATH_MAX * sizeof(char) / 2);
     getcwd(currPathTmp, (PATH_MAX / 2));

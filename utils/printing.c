@@ -9,14 +9,14 @@
  * @return if the currPath length is higher than 30, return a new char* following
  * this format : "..." followed with the 27 lasts characters of currPath, else return currPath; 
  */
-char* reducePathPromptLenght() {
+char* reducePathPromptLenght(int maxLength) {
     char* currPath = malloc (sizeof(char) * (strlen(getenv("PWD")) + 1));
     strcpy (currPath, getenv("PWD"));
-    if (strlen(currPath) < 25) return currPath;
+    if (strlen(currPath) < maxLength) return currPath;
     char* reducedPath = calloc(sizeof(char) * 31, sizeof(char));
     strcat(reducedPath, "...");
     //-3 à cause des point de suspension devant
-    char* keptPart = (char*) currPath + strlen(currPath) - (MAX_PATH_PROMPT_LENGTH - 3);
+    char* keptPart = (char*) currPath + strlen(currPath) - (maxLength - 3);
     strcat(reducedPath, keptPart);
     free(currPath);
     return reducedPath;
@@ -71,13 +71,16 @@ char* printPrompt(int lastCommandResult, char* path) {
     char* tmp = malloc(sizeof(char)*46);
     int reduced = 0;
     char* pathToPrint = path;
-    if (strlen(path) > MAX_PATH_PROMPT_LENGTH) {
+    int maxPathLenght = (lastCommandResult == 255) ? 23 : MAX_PATH_PROMPT_LENGTH;
+    if (strlen(path) > maxPathLenght) {
         reduced = 1;
-        pathToPrint = reducePathPromptLenght(path);
+        pathToPrint = reducePathPromptLenght(maxPathLenght);
     }
 
     if (lastCommandResult == 1) {
         snprintf(tmp, 46, "\033[91m[%d]\033[34m%s\033[00m$ ", lastCommandResult, pathToPrint);
+    }else if (lastCommandResult == 255) {
+        snprintf(tmp, 48, "\033[33m[SIG]\033[34m%s\033[00m$ ", pathToPrint+2);
     }else {
         snprintf(tmp, 46, "\033[32m[%d]\033[34m%s\033[00m$ ", lastCommandResult, pathToPrint);
     }
