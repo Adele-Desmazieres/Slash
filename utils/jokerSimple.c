@@ -44,31 +44,34 @@ char* getSuffix(const char* path){
         if(ret == NULL) perror("malloc @ getSuffix equals");
         strcpy(ret,path);
         return ret;
+    }else{
+
+        if(path[strlen(path) - 1] == '*'){
+            char* tmp = malloc(sizeof(char) * 2); tmp[0] = '*'; return tmp;
+        }
+
+        char* tmp = malloc(sizeof(char) * (strlen(path)+1));
+        if(tmp == NULL) perror("Erreur malloc getSuffix ");
+        strcpy(tmp,path);
+
+        char* ret = malloc(sizeof(char) * (strlen(path)));
+        if(ret == NULL) perror("Erreur malloc getSuffix ");
+        strcpy(ret,path);
+
+        int i = 1;
+        while(tmp[i] != '\0'){
+            ret[i-1] = tmp[i];
+            i++;
+        }
+
+        ret[i-1] = '\0';
+
+
+        free(tmp);
+        return ret;
+    
     }
 
-    if(path[strlen(path) - 1] == '*'){
-        char* tmp = malloc(sizeof(char) * 2); tmp = "*"; return tmp;
-    }
-
-    char* tmp = malloc(sizeof(char) * (strlen(path)+1));
-    if(tmp == NULL) perror("Erreur malloc getSuffix ");
-    strcpy(tmp,path);
-
-    char* ret = malloc(sizeof(char) * (strlen(path)));
-    if(ret == NULL) perror("Erreur malloc getSuffix ");
-    strcpy(ret,path);
-
-    int i = 1;
-    while(tmp[i] != '\0'){
-        ret[i-1] = tmp[i];
-        i++;
-    }
-
-    ret[i-1] = '\0';
-
-
-    free(tmp);
-    return ret;
     
 }
 
@@ -110,7 +113,7 @@ void ajouterPath (pathList* p, const char* path){
         return;
     }
     listNode* tmp = p->first;
-    while(tmp != NULL) tmp = tmp->next;
+    while(tmp->next != NULL) tmp = tmp->next;
     tmp->next = nouv;
     p->len++;
     return;
@@ -208,23 +211,24 @@ void parcourirRepertoire (pathList* p, int depth, int maxDepth, const char* curr
         //Si on ne peut pas ouvrir le répertoire, alors on abandonne cet appel == répertoire inexistant ou pas accès
         if ((dir = opendir(currPathCpy)) == NULL){
             printf("itération sur %s échouée\n", currPathCpy);
-            //free(suffixe);
-            //free(currPathCpy);
+            free(suffixe);
+            free(currPathCpy);
             return;
         } 
         while ((de = readdir(dir)) != NULL ){
             //On passe . et ..
-            if( strcmp(de->d_name, ".") == 0 || strcmp(de->d_name,"..") == 0) continue;
+            if( de->d_name[0] == '.') continue;
             if ((allRepertoire || isSuffix(de->d_name, suffixe))){
                 //On fait une copie locale du chemin
-                printf("Fichier: %s \n", de->d_name);
+                //printf("Fichier: %s \n", de->d_name);
                 char* currPathCpy2 = malloc((strlen(currPath)+2+strlen(de->d_name)+1) * sizeof(char));
                 if(currPathCpy2 == NULL) perror("erreur malloc");
                 strcpy(currPathCpy2, currPathCpy);
-                strcat(currPathCpy2, "/");
+                if(depth != 0) strcat(currPathCpy2, "/");
                 //On ajoute le nom du fichier courant à la copie du path
                 strcat(currPathCpy2, de->d_name);
                 //On ajoute ce nom à la liste
+                printf("test à l'ajout\n");
                 ajouterPath(p,currPathCpy2);
                 free(currPathCpy2);
             }
@@ -237,14 +241,14 @@ void parcourirRepertoire (pathList* p, int depth, int maxDepth, const char* curr
 
         //Si on ne peut pas ouvrir le répertoire, alors on abandonne cet appel == répertoire inexistant ou pas accès
         if ((dir = opendir(currPathCpy)) == NULL){
-            printf("itération sur %s échouée\n", currPathCpy);
-            //free(suffixe);
-            //free(currPathCpy);
+            //printf("itération sur %s échouée\n", currPathCpy);
+            free(suffixe);
+            free(currPathCpy);
             return;
         }
         while ((de = readdir(dir)) != NULL ){
             //On passe . et ..
-            if( strcmp(de->d_name, ".") == 0 || strcmp(de->d_name,"..") == 0) continue;
+            if( de->d_name[0] == '.') continue;
             //On récupère les infos du fichier courant
             if( (stat(currPathCpy, &st) < 0)) perror(" erreur stat() : jokerSimple");
             //printf("%d test %s\n",isSuffix(de->d_name, suffix), de->d_name);
@@ -254,11 +258,11 @@ void parcourirRepertoire (pathList* p, int depth, int maxDepth, const char* curr
                 char* currPathCpy2 = malloc((strlen(currPath)+2+strlen(de->d_name)+1) * sizeof(char));
                 if(currPathCpy2 == NULL) perror("erreur malloc");
                 strcpy(currPathCpy2, currPathCpy);
-                strcat(currPathCpy2, "/");
+                if(depth != 0) strcat(currPathCpy2, "/");
                 //On ajoute le nom du répertoire courant à la copie du path
                 strcat(currPathCpy2, de->d_name);
                 //appel récursif sur ce répertoire
-                printf("passage dans : %s\n", currPathCpy2);
+                //printf("passage dans : %s\n", currPathCpy2);
                 parcourirRepertoire(p, depth+1, maxDepth, currPathCpy2, pathArray);
                 free(currPathCpy2);
             }
@@ -267,9 +271,8 @@ void parcourirRepertoire (pathList* p, int depth, int maxDepth, const char* curr
     }
 
     //Libération de la mémoire
-    printf("Test1 \n");
-    //free(suffixe);
-    //free(currPathCpy);
+    free(suffixe);
+    free(currPathCpy);
 }
 
 
@@ -295,9 +298,7 @@ pathList* jokerSimple(char* orPath){
     //Comptage des arguments pour le tableau
     int maxDepth = countArgs(orPathCpy);
     
-    //Init d'une copie du path accumulatrice
-    char* pathCpy = malloc(sizeof(char) * (strlen(orPathCpy)+1));
-    if (pathCpy == NULL) perror("Erreur malloc @ jokerSimple");
+    char* pathCpy;
 
 
     //Init. du tableau d'arguments (chemins coupés par /)
@@ -308,18 +309,17 @@ pathList* jokerSimple(char* orPath){
 
     //Chemin absolu ou relatif
     if(*(orPathCpy) == '/') pathCpy = "/";
-    else pathCpy = ".";
+    else pathCpy = "./";
 
     //printf("%s\n",pathCpy);
 
-    printParsed(args, maxDepth);
+    //printParsed(args, maxDepth);
     //Appel initial sur le répertoire au début du chemin
     parcourirRepertoire (ret, 0, maxDepth, pathCpy, args);
     
-    printf("test2\n");
+    //printf("test2\n");
     freeParsedLine(args, maxDepth);
-    //free(orPathCpy);
-    //free(pathCpy);
+    free(orPathCpy);
 
     return ret;
 }
@@ -336,14 +336,29 @@ void afficherPathList(pathList* p){
 }
 
 
+char** pathListToArray(pathList* p){
+    char** ret = malloc(sizeof(char * )* p->len);
+    if(ret == NULL) perror("Erreur malloc @ pathListToArray : jokerSimple");
 
+    int i = 0;
+    listNode* tmp = p->first;
+    while(i < p->len){
+        ret[i] = malloc(sizeof(char) * (strlen(tmp->content)+1));
+        if(ret[i] == NULL) perror("Erreur malloc @ pathListToArray string : jokerSimple");
+        strcpy(ret[i], tmp->content);
+
+        i++; tmp = tmp->next;
+    }
+
+    return ret;
+}
+
+
+
+
+/*
 int main(void){
 
-    printf(" TESTS getSuffix() : \n");
-
-    printf("Get suffix : *abcd.c ->  %s\n", getSuffix("*abcd.c"));
-    printf("Get suffix : *lolilol ->  %s\n", getSuffix("*lolilol"));
-    printf("Get suffix : * ->  %s\n", getSuffix("*"));
 
     printf("\n\n    ESSAI PARSER : \n");
 
@@ -359,21 +374,30 @@ int main(void){
 
     printf("\n\n\n");
 
-    char* testPathAbs = "utils/*";
+    pathList* testList = creerPathList();
+    ajouterPath(testList,"haha");
+    ajouterPath(testList, "hoho");
+    ajouterPath(testList, "huhu");
+
+    afficherPathList(testList);
+    freepathList(testList);
+
+    printf("\n\n\n");
+
+    char* testPathAbs = "*";
 
     pathList* p = jokerSimple(testPathAbs);
 
     afficherPathList(p);
 
-    
+    char** essaiconv = pathListToArray(p);
+    printParsed(essaiconv, p->len);
 
-
-
-
-
-
+    freeParsedLine(essaiconv, p->len);
+    freepathList(p);
 
 }
+*/
 
 
 
