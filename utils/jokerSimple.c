@@ -285,18 +285,18 @@ void parcoursDouble(pathList* p, int depth, int maxDepth, const char* currPath, 
     char* currPathCpy = malloc((strlen(currPath)+1) * sizeof(char));
     if(currPathCpy == NULL) perror("erreur malloc");
     strcpy(currPathCpy, currPath);
-    printf("nom du chemin courant : %s\n", currPathCpy);
+    //printf("nom du chemin courant : %s\n", currPathCpy);
     
     int allRepertoire = 0;
 
     //Trouver suffixe du répertoire courant s'il existe, ouvrir le bon repertoire sinon
     char* suffixe = getSuffix(pathArray[0]);
     if (strcmp("*", suffixe) == 0) allRepertoire = 1;
-    printf("nom du suffixe courant : %s\n", suffixe);
+    //printf("nom du suffixe courant : %s\n", suffixe);
 
     //On parcourt le répertoire courant
     if ((dir = opendir(currPathCpy)) == NULL){
-            printf("itération sur %s échouée\n", currPathCpy);
+            //printf("itération sur %s échouée\n", currPathCpy);
             free(suffixe);
             free(currPathCpy);
             return;
@@ -362,10 +362,13 @@ pathList* jokerSimple(char* orPath){
 
     //printf("%s\n",pathCpy);
 
-    printParsed(args, maxDepth);
+    //printParsed(args, maxDepth);
     //Appel initial sur le répertoire au début du chemin
     if(doubleJoker == 0) parcourirRepertoire (ret, 0, maxDepth, pathCpy, args, 1, 0);
-    else parcoursDouble(ret, 0, maxDepth, pathCpy, args, 1);
+    else {
+        parcourirRepertoire (ret, 0, maxDepth, pathCpy, args, 1, 0);
+        parcoursDouble(ret, 0, maxDepth, pathCpy, args, 1);
+    }
     //printf("test2\n");
     freeParsedLine(args, maxDepth);
     if(doubleJoker) orPathCpy -= 3;
@@ -408,7 +411,7 @@ char** pathListToArray(pathList* p){
 
 /*
 int main(void){
-/*
+
 
     printf("\n\n    ESSAI PARSER : \n");
 
@@ -448,7 +451,7 @@ int main(void){
 
     printf("\n\n\n");
 
-    pathList* p1 = jokerSimple("** /*");
+    pathList* p1 = jokerSimple("** /  *");
 
     afficherPathList(p1); 
     freepathList(p1); 
