@@ -19,6 +19,7 @@ int isSuffix(const char* str, const char* suffix);
 char* getSuffix(const char* path);
 pathList* jokerSimple(char* orPath);
 char** pathListToArray(pathList* p);
+char** expansionJokers(char** args, int len, int* newLen);
 
 
 #endif

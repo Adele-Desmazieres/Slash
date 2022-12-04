@@ -13,6 +13,7 @@
 #include "./command/cd.h"
 #include "./command/pwd.h"
 #include "./command/exit.h"
+#include "./utils/jokerSimple.h"
 
 #define PATH_MAX 4096
 
@@ -32,7 +33,14 @@ commandResult* commandProcessHandler(command* command, int lastCommandState) {
     if ( strcmp(command->name, "exit") == 0 ) return exitCommandRunner(command, lastCommandState);
     if ( strcmp(command->name, "cd") == 0 ) return cdCommandRunner(command);
     if ( strcmp(command->name, "pwd") == 0 ) return pwdCommandRunner(command);
-    //TO-DO : cas des commandes externes
+    
+    // expansion des jokers pour les commandes externes
+    int *newArgNb = malloc(sizeof(int));
+    if (newArgNb == NULL) exit(-1);
+    char** expanded = expansionJokers(command->args, command->argNumber, newArgNb);
+    command->args = expanded;
+    command->argNumber = *newArgNb;
+    
     switch(r = fork()) {
         case -1: break;
         case 0: dup2(STDOUT_FILENO, STDERR_FILENO);
