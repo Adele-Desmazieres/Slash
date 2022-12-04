@@ -407,12 +407,44 @@ char** pathListToArray(pathList* p){
 }
 
 
+// Prend en argument un tableau de string représentant les arguments de la commande
+// Renvoie un tableau de string des arguments, dont les joker ont été interprêtés
+char** extensionJokers(char** args, int len, int* newLen) {
+    
+    pathList* listeDesArgs = creerPathList();
+    int nbArgs = 0;
+    int i = 0;
+    
+    while (i < len) {
+        
+        char* argument = args[i];
+        
+        if (containsSimpleJoker(argument)) {
+            
+            pathList* tmp = jokerSimple(argument);
+            listeDesArgs = concatList(listeDesArgs, tmp);
+            nbArgs += tmp->len;
+            
+        } else {
+            ajouterPath(listeDesArgs, argument);
+            nbArgs += 1;
+        }
+        
+        i++;
+    }
+    *newLen = nbArgs;
+    char** ret = pathListToArray(listeDesArgs);
+    freepathList(listeDesArgs);
+    
+    return ret;
+    
+}
 
 
 /*
 int main(void){
 
-
+    
     printf("\n\n    ESSAI PARSER : \n");
 
     char* testPath = "/helloo/foo/lol/luzog/test/essai/oui";
@@ -437,7 +469,7 @@ int main(void){
 
     printf("\n\n\n");
 
-    char* testPathAbs = "/* / *";
+    char* testPathAbs = "/ * / *";
 
     pathList* p = jokerSimple(testPathAbs);
 
@@ -455,10 +487,27 @@ int main(void){
 
     afficherPathList(p1); 
     freepathList(p1); 
+    
 
+    char* a = "ls";
+    char* b = "-P";
+    char* c = "/home/benoit/.txt";
+    char* d = "example";
+    
+    char* in1[] = {a, b, c, d};
+    printParsed(in1, 4);
+    printf("\n");
+    
+    int* newLen = malloc(sizeof(int));
+    if (newLen == NULL) exit(-1);
+    char** out1 = extensionJokers(in1, 4, newLen);
+    printf("%d\n", *newLen);
+    printParsed(out1, *newLen);
+    printf("\n");
+    
 }
-*/
 
+*/
 
 
 
