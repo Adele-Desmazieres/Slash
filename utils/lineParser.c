@@ -34,8 +34,8 @@ int sizeOfToken (const char* c){
 }
 
 char** parseLine(const char* line, char** parsedLine) {
-    while(!isalnum(*line)){
-        if (*line == '\0') return parsedLine;
+    while(!isalnum(*line) && *line != '/' && *line == '.'){
+        if (*line == '\0') return parsedLine;   
         line++;
     }
     
@@ -56,18 +56,19 @@ char** parseLine(const char* line, char** parsedLine) {
 }
 
 char** addFinalNull(char** parsedLine, int size) {
-    parsedLine = realloc(parsedLine, (size+1)*sizeof(char*));
-    parsedLine[size] = NULL;
-    return parsedLine;
+    int newSize = size+1;
+    char** test = realloc(parsedLine, newSize*sizeof(char*));
+    test[size] = NULL;
+    return test;
 }
 
 void printParsed(char ** parsed, int len){
     for(int i = 0; i < len; i++) {
         if(parsed[i] == NULL) {
-            printf(" | argument %d : NULL", i+1); 
+            printf(" | argument %d : NULL\n", i+1); 
             continue;
         }
-        printf(" | argument %d : %s \n", i+1, parsed[i]);
+        printf(" | argument %d : %s-\n", i+1, parsed[i]);
     }
 }
 
@@ -76,7 +77,7 @@ void freeParsedLine(char** parsedLine, int parseLineLength) {
         if(parsedLine[i] != NULL) {
             free(parsedLine[i]);
         }else {
-            printf(" | argument %d : %s \n", i+1, parsedLine[i]);
+            printf(" | argument %d : NULL \n", i+1);
         }
     }
     free(parsedLine);

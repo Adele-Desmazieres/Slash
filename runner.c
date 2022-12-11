@@ -19,7 +19,7 @@
 
 void readResult(command* command, commandResult* commandResult) {
     if (commandResult->success == FALSE) {
-        printError(commandResult->resultMessage);
+        if (commandResult->resultMessage) printError(commandResult->resultMessage);
         return;
     }
     if (commandResult->resultMessage) {
@@ -35,16 +35,19 @@ commandResult* commandProcessHandler(command* command, int lastCommandState) {
     if ( strcmp(command->name, "pwd") == 0 ) return pwdCommandRunner(command);
     
     // expansion des jokers pour les commandes externes
-    int *newArgNb = malloc(sizeof(int));
-    if (newArgNb == NULL) exit(-1);
-    char** expanded = expansionJokers(command->args, command->argNumber, newArgNb);
-    command->args = expanded;
-    command->argNumber = *newArgNb;
+    // int *newArgNb = malloc(sizeof(int));
+    // if (newArgNb == NULL) exit(-1);
+    // char** expanded = expansionJokers(command->args, command->argNumber, newArgNb);
+    // free(command->args);
+    // command->args = expanded;
+    // command->argNumber = *newArgNb;
     
     switch(r = fork()) {
         case -1: break;
         case 0: dup2(STDOUT_FILENO, STDERR_FILENO);
-                execvp(command->name, addFinalNull(command->args, command->argNumber));
+                command->args = addFinalNull(command->args, command->argNumber);
+                execv(command->name, command->args);
+                execvp(command->name, command->args);
                 exit(127);
         default: 
                 waitpid(r, &result, 0);
@@ -86,25 +89,23 @@ int main(int argc, char *argv[]) {
     while (( line = readline((prompt = printPrompt(returnValue, getenv("PWD"))))) != NULL) {
         free(prompt);
         char** parsedLine;
+
+        int nbrArgs = countArgs(line);
+        if (nbrArgs == 0) continue;
+
         add_history(line);
         //printf("displayed : %s\n", line);
 
         // parser la ligne (mots et opérateurs séparés par des espaces)
-        
-        int nbrArgs = countArgs(line);
-        if (nbrArgs == 0) continue;
-        
-
         parsedLine = Calloc(nbrArgs , sizeof(char *), "Erreur calloc");
         parsedLine = parseLine(line, parsedLine);
-
         //printParsed(parsedLine, nbrArgs);        
     
         // initier un objet commande puis interprète la commande
         command* commande = buildCommand(parsedLine, nbrArgs);
         
-
         commandResult* result = commandProcessHandler(commande, returnValue);
+        //printParsed(parsedLine, nbrArgs);
         freeParsedLine(parsedLine, nbrArgs);
 
         if (result->fatal == TRUE) { 
