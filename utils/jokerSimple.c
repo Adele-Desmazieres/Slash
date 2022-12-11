@@ -49,10 +49,10 @@ char* getSuffix(const char* path){
         strcpy(ret,path);
         return ret;
     }else{
-
         if(path[strlen(path) - 1] == '*'){
             char* tmp = malloc(sizeof(char) * 2); tmp[0] = '*'; tmp[1] = '\0'; return tmp;
         }
+
 
         char* tmp = malloc(sizeof(char) * (strlen(path)+1));
         if(tmp == NULL) perror("Erreur malloc getSuffix ");
@@ -153,8 +153,10 @@ int countArgsJoker(const char* c) {
 
 int sizeOfTokenJoker(const char* c){
     int size = 0;
-    while(*c != '\0' && *c != '/'){
-        size++; c++;
+    while(*c != '\0'){
+        size++; 
+        if(*c == '/') return size;
+        c++;
     }
     return size;
 }
@@ -166,14 +168,14 @@ char** parseLineJoker(const char* line, char** parsedLine) {
     }
     int iterator = 0;
     while(*line != '\0'){
-        if(*line != '/'){
+        //if(*line != '/'){
             int tokenSize = sizeOfTokenJoker(line);
             parsedLine[iterator] = calloc ((1 + tokenSize), sizeof(char));
             strncat(parsedLine[iterator], line, tokenSize);
             parsedLine[iterator++][tokenSize] = '\0';
             line += tokenSize;
             if(*line == '\0') return parsedLine; 
-        }
+        //}
         line++;
     }
     return parsedLine;
@@ -181,7 +183,6 @@ char** parseLineJoker(const char* line, char** parsedLine) {
 
 void freeParsedLineJoker(char** parsedLine, int parseLineLength) {
     for (int i = 0; i < parseLineLength; i++) {
-        printf("I--> %d\n", i);
         if(parsedLine[i]) free(parsedLine[i]);
     }
     free(parsedLine);
@@ -204,6 +205,9 @@ void parcourirRepertoire (pathList* p, int depth, int maxDepth, const char* curr
 
     //Trouver suffixe du répertoire courant s'il existe, ouvrir le bon repertoire sinon
     char* suffixe = getSuffix(pathArray[depth]);
+    int searchDir = 0;
+    if (suffixe[strlen(suffixe)-1] == '/') searchDir = 1;
+    suffixe[strlen(suffixe)-1] = '\0';
     if (strcmp("*", suffixe) == 0) allRepertoire = 1;
     //printf("nom du suffixe courant : %s\n", suffixe);
 
@@ -231,7 +235,8 @@ void parcourirRepertoire (pathList* p, int depth, int maxDepth, const char* curr
         while ((de = readdir(dir)) != NULL ){
             //On passe . et ..
             if( de->d_name[0] == '.') continue;
-            if (((allRepertoire)  || isSuffix(de->d_name, suffixe))){
+            if (searchDir && !(de->d_type == DT_DIR)) continue;
+            if (((allRepertoire) || isSuffix(de->d_name, suffixe))){
                 //On fait une copie locale du chemin
                 //printf("Fichier: %s \n", de->d_name);
                 char* currPathCpy2 = malloc((strlen(currPath)+2+strlen(de->d_name)+1) * sizeof(char));
@@ -365,45 +370,35 @@ pathList* jokerSimple(char* orPath){
     if(strlen(orPathCpy) >= 3 && orPath[0] == '*' && orPath[1] == '*' && orPath[2] == '/'){
         orPathCpy += 3; doubleJoker = 1;
     }
-    printf("JS0\n");
     //Comptage des arguments pour le tableau
     int maxDepth = countArgsJoker(orPathCpy);
     
     char* pathCpy;
 
 
-    printf("JS1 + %d\n", maxDepth);
     //Init. du tableau d'arguments (chemins coupés par /)
     char** args = malloc(sizeof(char *) * maxDepth);
     if(args == NULL) perror("erreur malloc");
     args = parseLineJoker(orPathCpy, args);
-    printf("ORPATH : %s\n", orPathCpy);
     //printf("%d\n", maxDepth);
 
-    printf("JS2\n");
     //Chemin absolu ou relatif
     if(*(orPathCpy) == '/') pathCpy = "/";
     else pathCpy = "";
 
     //printf("%s\n",pathCpy);
-    printf("JS3\n");
     //printParsedJoker(args, maxDepth);
     //Appel initial sur le répertoire au début du chemin
     if(doubleJoker == 0) {
-        printf("JS4-T\n");
         parcourirRepertoire(ret, 0, maxDepth, pathCpy, args, 1, 0);
     }else {
-        printf("JS4-F\n");
         parcourirRepertoire(ret, 0, maxDepth, pathCpy, args, 1, 0);
         parcoursDouble(ret, 0, maxDepth, pathCpy, args, 1);
     }
-    printf("JS5\n");
-    printParsedJoker(args, maxDepth);
+    //printParsedJoker(args, maxDepth);
     freeParsedLineJoker(args, maxDepth);
-    printf("JS6\n");
     if(doubleJoker) orPathCpy -= 3;
     free(orPathCpy);
-    printf("JS7\n");
 
     return ret;
 }
@@ -441,17 +436,13 @@ char** pathListToArray(pathList* p){
 // Prend en argument un tableau de string représentant les arguments de la commande
 // Renvoie un tableau de string des arguments, dont les joker ont été interprêtés
 char** expansionJokers(char** args, int len, int* newLen) {
-    printf("---------------------TEST");
     pathList* listeDesArgs = creerPathList();
     int nbArgs = 0;
     int i = 0;
     
-    printf("TEST HEY\n");
     while (i < len) {
         
         char* argument = args[i];
-        printf("TEST HEY2\n");
-        printf("L %d | I %d\n", len, i);
         if (containsSimpleJoker(argument)) {
             
             pathList* tmp = jokerSimple(argument);
@@ -462,7 +453,6 @@ char** expansionJokers(char** args, int len, int* newLen) {
             ajouterPath(listeDesArgs, argument);
             nbArgs += 1;
         }
-        printf("L %d | I %d\n", len, i);
         i++;
     }
     *newLen = nbArgs;
