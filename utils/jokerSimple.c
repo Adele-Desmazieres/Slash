@@ -291,8 +291,6 @@ void parcoursDouble(pathList* p, int depth, int maxDepth, const char* currPath, 
     if(currPathCpy == NULL) perror("erreur malloc");
     strcpy(currPathCpy, currPath);
     //printf("nom du chemin courant : %s\n", currPathCpy);
-    
-    int allRepertoire = 0;
 
     //Trouver suffixe du répertoire courant s'il existe, ouvrir le bon repertoire sinon
     char* suffixe = getSuffix(pathArray[0]);
