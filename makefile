@@ -25,7 +25,7 @@ commands.o: ./command/cd.o ./command/exit.o ./command/pwd.o
 	$(CC) -c -fPIC ./command/pwd.c -o ./command/pwd.o
 
 # UTILS
-utils.o: ./utils/command.o ./utils/lineParser.o ./utils/memory.o ./utils/printing.o ./utils/stack.o
+utils.o: ./utils/command.o ./utils/lineParser.o ./utils/memory.o ./utils/printing.o ./utils/stack.o ./utils/jokerSimple.o
 
 command.o: ./utils/command.c
 	$(CC) -c -fPIC ./utils/command.c -o ./utils/command.o
@@ -42,6 +42,8 @@ printing.o: ./utils/printing.c
 stack.o: ./utils/stack.c
 	$(CC) -c -fPIC ./utils/stack.c -o ./utils/stack.o
 
+jokerSimple.o: ./utils/jokerSimple.c
+	$(CC) -c -fPIC ./utils/jokerSimple.c -o ./utils/jokerSimple.o
 
 
 clean:

@@ -4,14 +4,18 @@
 #include <sys/types.h>
 #include <dirent.h>
 #include <ctype.h>
-#include "jokerSimple.h"
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
-void printParsed(char ** parsed, int len){
+#include "jokerSimple.h"
+//#include "lineParser.h"
+
+
+void printParsedJoker(char ** parsed, int len){
     for(int i = 0; i < len; i++) printf(" argument %d : %s \n", i+1, parsed[i]);
 }
+
 
 int containsSimpleJoker (const char* path){
     int i = 0;
@@ -54,7 +58,7 @@ char* getSuffix(const char* path){
         if(tmp == NULL) perror("Erreur malloc getSuffix ");
         strcpy(tmp,path);
 
-        char* ret = malloc(sizeof(char) * (strlen(path)));
+        char* ret = malloc(sizeof(char) * (strlen(path)+1));
         if(ret == NULL) perror("Erreur malloc getSuffix ");
         strcpy(ret,path);
 
@@ -130,7 +134,7 @@ pathList* concatList(pathList* dest, pathList* src){
 }
 
 
-int countArgs(const char* c) {
+int countArgsJoker(const char* c) {
     
     while(*c == '/'){
         if(*c == '\0') return 0;
@@ -150,7 +154,8 @@ int countArgs(const char* c) {
     return count;
 }
 
-int sizeOfToken (const char* c){
+
+int sizeOfTokenJoker(const char* c){
     int size = 0;
     while(*c != '\0' && *c != '/'){
         size++; c++;
@@ -158,7 +163,7 @@ int sizeOfToken (const char* c){
     return size;
 }
 
-char** parseLine(const char* line, char** parsedLine) {
+char** parseLineJoker(const char* line, char** parsedLine) {
     while(*line == '/'){
         if (*line == '\0') return parsedLine;
         line++;
@@ -167,7 +172,7 @@ char** parseLine(const char* line, char** parsedLine) {
     int iterator = 0;
     while(*line != '\0'){
         if(*line != '/'){
-            int tokenSize = sizeOfToken(line);
+            int tokenSize = sizeOfTokenJoker(line);
             parsedLine[iterator] = calloc (sizeof(char) , (1 + tokenSize));
             strncat(parsedLine[iterator], line, tokenSize);
             parsedLine[iterator++][tokenSize] = '\0';
@@ -180,7 +185,7 @@ char** parseLine(const char* line, char** parsedLine) {
     return parsedLine;
 }
 
-void freeParsedLine(char** parsedLine, int parseLineLength) {
+void freeParsedLineJoker(char** parsedLine, int parseLineLength) {
     for (int i = 0; i < parseLineLength; i++) {
         free(parsedLine[i]);
     }
@@ -286,8 +291,6 @@ void parcoursDouble(pathList* p, int depth, int maxDepth, const char* currPath, 
     if(currPathCpy == NULL) perror("erreur malloc");
     strcpy(currPathCpy, currPath);
     //printf("nom du chemin courant : %s\n", currPathCpy);
-    
-    int allRepertoire = 0;
 
     //Trouver suffixe du répertoire courant s'il existe, ouvrir le bon repertoire sinon
     char* suffixe = getSuffix(pathArray[0]);
@@ -345,7 +348,7 @@ pathList* jokerSimple(char* orPath){
     }
 
     //Comptage des arguments pour le tableau
-    int maxDepth = countArgs(orPathCpy);
+    int maxDepth = countArgsJoker(orPathCpy);
     
     char* pathCpy;
 
@@ -353,7 +356,7 @@ pathList* jokerSimple(char* orPath){
     //Init. du tableau d'arguments (chemins coupés par /)
     char** args = malloc(sizeof(char *) * maxDepth);
     if(args == NULL) perror("erreur malloc");
-    args = parseLine(orPathCpy, args);
+    args = parseLineJoker(orPathCpy, args);
     //printf("%d\n", maxDepth);
 
     //Chemin absolu ou relatif
@@ -362,15 +365,15 @@ pathList* jokerSimple(char* orPath){
 
     //printf("%s\n",pathCpy);
 
-    //printParsed(args, maxDepth);
+    //printParsedJoker(args, maxDepth);
     //Appel initial sur le répertoire au début du chemin
-    if(doubleJoker == 0) parcourirRepertoire (ret, 0, maxDepth, pathCpy, args, 1, 0);
+    if(doubleJoker == 0) parcourirRepertoire(ret, 0, maxDepth, pathCpy, args, 1, 0);
     else {
-        parcourirRepertoire (ret, 0, maxDepth, pathCpy, args, 1, 0);
+        parcourirRepertoire(ret, 0, maxDepth, pathCpy, args, 1, 0);
         parcoursDouble(ret, 0, maxDepth, pathCpy, args, 1);
     }
     //printf("test2\n");
-    freeParsedLine(args, maxDepth);
+    freeParsedLineJoker(args, maxDepth);
     if(doubleJoker) orPathCpy -= 3;
     free(orPathCpy);
 
@@ -407,23 +410,55 @@ char** pathListToArray(pathList* p){
 }
 
 
+// Prend en argument un tableau de string représentant les arguments de la commande
+// Renvoie un tableau de string des arguments, dont les joker ont été interprêtés
+char** expansionJokers(char** args, int len, int* newLen) {
+    
+    pathList* listeDesArgs = creerPathList();
+    int nbArgs = 0;
+    int i = 0;
+    
+    while (i < len) {
+        
+        char* argument = args[i];
+        
+        if (containsSimpleJoker(argument)) {
+            
+            pathList* tmp = jokerSimple(argument);
+            listeDesArgs = concatList(listeDesArgs, tmp);
+            nbArgs += tmp->len;
+            
+        } else {
+            ajouterPath(listeDesArgs, argument);
+            nbArgs += 1;
+        }
+        
+        i++;
+    }
+    *newLen = nbArgs;
+    char** ret = pathListToArray(listeDesArgs);
+    freepathList(listeDesArgs);
+    
+    return ret;
+    
+}
+
 
 
 /*
 int main(void){
-
 
     printf("\n\n    ESSAI PARSER : \n");
 
     char* testPath = "/helloo/foo/lol/luzog/test/essai/oui";
     char** test1 = malloc(sizeof(char * ) * 7);
     if(test1 == NULL) perror("malloc test");
-    test1 = parseLine(testPath, test1);
+    test1 = parseLineJoker(testPath, test1);
 
-    printf("Nombre d'arguments : %d\n", countArgs(testPath));
-    printParsed(test1, 7);
+    printf("Nombre d'arguments : %d\n", countArgsJoker(testPath));
+    printParsedJoker(test1, 7);
 
-    freeParsedLine(test1, 7);
+    freeParsedLineJoker(test1, 7);
 
     printf("\n\n\n");
 
@@ -437,16 +472,16 @@ int main(void){
 
     printf("\n\n\n");
 
-    char* testPathAbs = "/* / *";
+    char* testPathAbs = "/ * / *";
 
     pathList* p = jokerSimple(testPathAbs);
 
     //afficherPathList(p);
 
     char** essaiconv = pathListToArray(p);
-    //printParsed(essaiconv, p->len);
+    //printParsedJoker(essaiconv, p->len);
 
-    freeParsedLine(essaiconv, p->len);
+    freeParsedLineJoker(essaiconv, p->len);
     freepathList(p);
 
     printf("\n\n\n");
@@ -455,7 +490,25 @@ int main(void){
 
     afficherPathList(p1); 
     freepathList(p1); 
+    
+    // TESTS 2
 
+    char* a = "echo";
+    char* b = "-P";
+    char* c = "example";
+    char* d = "*";
+    
+    char* in1[] = {a, b, c, d};
+    printParsedJoker(in1, 4);
+    printf("\n");
+    
+    int* newLen = malloc(sizeof(int));
+    if (newLen == NULL) exit(-1);
+    char** out1 = expansionJokers(in1, 4, newLen);
+    printf("%d\n", *newLen);
+    printParsedJoker(out1, *newLen);
+    printf("\n");
+    
 }
 */
 
