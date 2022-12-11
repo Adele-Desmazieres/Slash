@@ -35,12 +35,12 @@ commandResult* commandProcessHandler(command* command, int lastCommandState) {
     if ( strcmp(command->name, "pwd") == 0 ) return pwdCommandRunner(command);
     
     // expansion des jokers pour les commandes externes
-    // int *newArgNb = malloc(sizeof(int));
-    // if (newArgNb == NULL) exit(-1);
-    // char** expanded = expansionJokers(command->args, command->argNumber, newArgNb);
-    // free(command->args);
-    // command->args = expanded;
-    // command->argNumber = *newArgNb;
+    int *newArgNb = malloc(sizeof(int));
+    if (newArgNb == NULL) exit(-1);
+    char** expanded = expansionJokers(command->args, command->argNumber, newArgNb);
+    //free(command->args);
+    command->args = expanded;
+    command->argNumber = *newArgNb;
     
     switch(r = fork()) {
         case -1: break;

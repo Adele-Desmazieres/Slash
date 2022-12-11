@@ -34,7 +34,7 @@ int sizeOfToken (const char* c){
 }
 
 char** parseLine(const char* line, char** parsedLine) {
-    while(!isalnum(*line) && *line != '/' && *line == '.'){
+    while(!isalnum(*line) && *line != '/' && *line != '.'){
         if (*line == '\0') return parsedLine;   
         line++;
     }

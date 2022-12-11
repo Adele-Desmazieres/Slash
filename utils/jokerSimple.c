@@ -198,6 +198,8 @@ void parcourirRepertoire (pathList* p, int depth, int maxDepth, const char* curr
     DIR* dir;
     struct stat st;
 
+    char * pathIsHere = "./";
+
     char* currPathCpy = malloc((strlen(currPath)+1) * sizeof(char));
     if(currPathCpy == NULL) perror("erreur malloc");
     strcpy(currPathCpy, currPath);
@@ -214,16 +216,27 @@ void parcourirRepertoire (pathList* p, int depth, int maxDepth, const char* curr
     //Si depth = maxDepth - 1, alors ajouter à p tous les fichiers qui correspond au suffixe courant
     if(depth >= maxDepth - 1){
         //Si on ne peut pas ouvrir le répertoire, alors on abandonne cet appel == répertoire inexistant ou pas accès
-        if ((dir = opendir(currPathCpy)) == NULL){
-            //printf("itération sur %s échouée\n", currPathCpy);
-            free(suffixe);
-            free(currPathCpy);
-            return;
-        } 
+        if (strcmp(currPathCpy, "") == 0){
+           if ((dir = opendir(pathIsHere)) == NULL){
+                //printf("itération sur %s échouée\n", currPathCpy);
+                free(suffixe);
+                free(currPathCpy);
+                return;
+            }  
+        } else {
+            if ((dir = opendir(currPathCpy)) == NULL){
+                //printf("itération sur %s échouée\n", currPathCpy);
+                free(suffixe);
+                free(currPathCpy);
+                return;
+            } 
+        }
+        
+        
         while ((de = readdir(dir)) != NULL ){
             //On passe . et ..
             if( de->d_name[0] == '.') continue;
-            if ((allRepertoire || isSuffix(de->d_name, suffixe))){
+            if (((allRepertoire)  || isSuffix(de->d_name, suffixe))){
                 //On fait une copie locale du chemin
                 //printf("Fichier: %s \n", de->d_name);
                 char* currPathCpy2 = malloc((strlen(currPath)+2+strlen(de->d_name)+1) * sizeof(char));
@@ -245,20 +258,30 @@ void parcourirRepertoire (pathList* p, int depth, int maxDepth, const char* curr
         //NE PAS OUBLIER DE METTRE A JOUR LE REPERTOIRE COURANT SUR UNE ITERATION
 
         //Si on ne peut pas ouvrir le répertoire, alors on abandonne cet appel == répertoire inexistant ou pas accès
-        if ((dir = opendir(currPathCpy)) == NULL){
-            //printf("itération sur %s échouée\n", currPathCpy);
-            free(suffixe);
-            free(currPathCpy);
-            return;
+        if (strcmp(currPathCpy, "") == 0){
+           if ((dir = opendir(pathIsHere)) == NULL){
+                //printf("itération sur %s échouée\n", currPathCpy);
+                free(suffixe);
+                free(currPathCpy);
+                return;
+            }  
+        } else {
+            if ((dir = opendir(currPathCpy)) == NULL){
+                //printf("itération sur %s échouée\n", currPathCpy);
+                free(suffixe);
+                free(currPathCpy);
+                return;
+            } 
         }
         while ((de = readdir(dir)) != NULL ){
             //On passe . et ..
-            if( de->d_name[0] == '.') continue;
+            //if( de->d_name[0] == '.') continue;
             //On récupère les infos du fichier courant
-            if( (stat(currPathCpy, &st) < 0)) perror(" erreur stat() : jokerSimple");
+            if (strcmp(currPathCpy,"") == 0) { if( (stat(pathIsHere, &st) < 0)) perror(" erreur stat() : jokerSimple"); }
+            else { if( (stat(currPathCpy, &st) < 0)) perror(" erreur stat() : jokerSimple"); }
             //printf("%d test %s\n",isSuffix(de->d_name, suffix), de->d_name);
             //Si (le nom correspond au suffixe OU l'étoile est complète) et qu'il ne s'agit pas d'un lien symbolique et qu'il s'agit d'un répertoire
-            if (S_ISDIR(st.st_mode) && !(S_ISLNK(st.st_mode)) && (allRepertoire || isSuffix(de->d_name, suffixe)) ){
+            if (S_ISDIR(st.st_mode) && !(S_ISLNK(st.st_mode)) && ((allRepertoire && de->d_name[0]!='.' ) || isSuffix(de->d_name, suffixe)) ){
                 //On fait une copie locale du chemin
                 char* currPathCpy2 = malloc((strlen(currPath)+2+strlen(de->d_name)+1) * sizeof(char));
                 if(currPathCpy2 == NULL) perror("erreur malloc");
@@ -362,7 +385,7 @@ pathList* jokerSimple(char* orPath){
 
     //Chemin absolu ou relatif
     if(*(orPathCpy) == '/') pathCpy = "/";
-    else pathCpy = "./";
+    else pathCpy = "";
 
     //printf("%s\n",pathCpy);
 
