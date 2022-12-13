@@ -241,13 +241,11 @@ void parcourirRepertoire (pathList* p, int depth, int maxDepth, const char* curr
     //Si on rencontre . on ne change pas le dossier de recherche
     //Si on rencontre .. on remonte dans l'arborescence;
     if(strcmp(suffixe, "./") == 0) {
-        if (depth == maxDepth-1) ajouterPath(p, mergeFilePathAndName(currPath, ".", 1));
-        else parcourirRepertoire(p, depth+1, maxDepth, currPath, pathArray, 0, 0);
+        parcourirRepertoire(p, depth+1, maxDepth, mergeFilePathAndName(currPath, ".", 1), pathArray, 0, 0);
         return;
     }
     if(strcmp(suffixe, "../") == 0) {
-        if (depth == maxDepth-1) ajouterPath(p, mergeFilePathAndName(currPath, "..", 1));
-        else parcourirRepertoire(p, depth+1, maxDepth, deleteCurrDirOnPath(currPath), pathArray, 0, 0); 
+        parcourirRepertoire(p, depth+1, maxDepth, mergeFilePathAndName(currPath, "..", 1), pathArray, 0, 0);
         return;
     }
 
@@ -293,13 +291,16 @@ void parcourirRepertoire (pathList* p, int depth, int maxDepth, const char* curr
         if ( isSuffix(de->d_name, suffixe) ){
             //printf("IsSuffix(. ..) %d \n", isSuffix(".", ".."));
             //On fait une copie locale du chemin
-            //char* basePath = (strcmp(pathToOpen, "./") == 0) ? "" : pathToOpen;
-            char* currPathCpy2 = mergeFilePathAndName(pathToOpen, de->d_name, S_ISDIR(st.st_mode));
+            char* basePath = (strcmp(pathToOpen, "./") == 0) ? "" : pathToOpen;
+            if (strcmp(currPath, "./") == 0) basePath = "./";
+            char* currPathCpy2 = mergeFilePathAndName(basePath, de->d_name, S_ISDIR(st.st_mode));
             //printf("MATCHING : %s\n", currPathCpy2);
             //On ajoute le nom du fichier courant à la copie du path
             //printf("test à l'ajout\n");
             if(depth == maxDepth-1) {
                 //On ajoute ce nom à la liste
+                int tmpLen = strlen(currPathCpy2)-1;
+                if (currPathCpy2[tmpLen] == '.') currPathCpy2[tmpLen] = '\0';
                 ajouterPath(p,currPathCpy2);
             }else {
                 parcourirRepertoire(p, depth+1, maxDepth, currPathCpy2, pathArray, 0, 0);
