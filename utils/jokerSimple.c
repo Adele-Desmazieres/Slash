@@ -191,8 +191,20 @@ void freeParsedLineJoker(char** parsedLine, int parseLineLength) {
     free(parsedLine);
 }
 
-void parcourirRepertoire (pathList* p, int depth, int maxDepth, const char* currPath, char** pathArray, int start, int doubles){
+char* deleteCurrDirOnPath(char* path) {
+    int len = strlen(path);
+    if(len == 0) return path;
+    while(path[len-1] != '/') {
+        path[len-1] = '\0';
+        len--;
+    }
+    if (len <= 0) return path;
+    path[len-1] = '\0';
+    return path;
+}
 
+void parcourirRepertoire (pathList* p, int depth, int maxDepth, const char* currPath, char** pathArray, int start, int doubles){
+    printf("PP : %s\n", currPath);
     struct dirent* de;
     DIR* dir;
     struct stat st;
@@ -208,10 +220,12 @@ void parcourirRepertoire (pathList* p, int depth, int maxDepth, const char* curr
 
     //Trouver suffixe du répertoire courant s'il existe, ouvrir le bon repertoire sinon
     char* suffixe = getSuffix(pathArray[depth]);
-    //printf("Suffixe courant = %s \n", suffixe);
-    //int searchDir = 0;
-    //if (suffixe[strlen(suffixe)-1] == '/') searchDir = 1;
-    //suffixe[strlen(suffixe)-1] = '\0';
+    //printf("Suffixe courant = %s\n", suffixe);
+    int searchDir = 0;
+    if (suffixe[strlen(suffixe)-1] == '/') {
+        searchDir = 1;
+        suffixe[strlen(suffixe)-1] = '\0';
+    }
     //printf("Suffixe courant après modif bizarre = %s \n", suffixe);
     if (strcmp("*", suffixe) == 0) allRepertoire = 1;
     //printf("nom du suffixe courant : %s\n", suffixe);
@@ -288,7 +302,7 @@ void parcourirRepertoire (pathList* p, int depth, int maxDepth, const char* curr
             else { if( (stat(currPathCpy, &st) < 0)) perror(" erreur stat() : jokerSimple"); }
             //printf("%d test %s\n",isSuffix(de->d_name, suffix), de->d_name);
             //Si (le nom correspond au suffixe OU l'étoile est complète) et qu'il ne s'agit pas d'un lien symbolique et qu'il s'agit d'un répertoire
-            if (S_ISDIR(st.st_mode) && !(S_ISLNK(st.st_mode)) && ((allRepertoire && de->d_name[0]!='.' ) || isSuffix(de->d_name, suffixe)) ){
+            if (S_ISDIR(st.st_mode) && !(S_ISLNK(st.st_mode)) && (( de->d_name[0]!='.' ) || isSuffix(de->d_name, suffixe)) ){
                 //On fait une copie locale du chemin
                 char* currPathCpy2 = malloc((strlen(currPath)+2+strlen(de->d_name)+1) * sizeof(char));
                 if(currPathCpy2 == NULL) perror("erreur malloc");
@@ -451,11 +465,14 @@ char** expansionJokers(char** args, int len, int* newLen) {
         
         char* argument = args[i];
         if (containsSimpleJoker(argument)) {
-            
+            printf("Test for args : %s\n", argument);
             pathList* tmp = jokerSimple(argument);
             listeDesArgs = concatList(listeDesArgs, tmp);
             nbArgs += tmp->len;
-            
+            if (tmp->len == 0) {
+                ajouterPath(listeDesArgs, argument);
+                nbArgs++;
+            }
         } else {
             ajouterPath(listeDesArgs, argument);
             nbArgs += 1;

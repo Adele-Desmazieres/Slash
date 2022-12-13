@@ -40,7 +40,9 @@ commandResult* commandProcessHandler(command* command, int lastCommandState) {
     char** expanded = expansionJokers(command->args, command->argNumber, newArgNb);
     //free(command->args);
     command->args = expanded;
+    command->name = command->args[0];
     command->argNumber = *newArgNb;
+    printParsed(expanded, command->argNumber);
     
     switch(r = fork()) {
         case -1: break;
