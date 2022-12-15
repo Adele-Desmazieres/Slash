@@ -12,7 +12,7 @@
 /* CAS PHYSIQUE (-P) */
 commandResult* pwdPhysical(command* command) {
     char* cwd = getcwd(NULL,0);
-    commandResult* result = buildCommandResult(TRUE, cwd);
+    commandResult* result = buildCommandResult(SUCCESS, cwd);
     free(cwd);
     return result;
 }
@@ -22,7 +22,7 @@ commandResult* pwdPhysical(command* command) {
 /* CAS LOGIQUE (-L) */
 commandResult* pwdLogical(command* command) {
 
-    return buildCommandResult(TRUE, getenv("PWD"));
+    return buildCommandResult(SUCCESS, getenv("PWD"));
 }
 /* **************** */
 
@@ -34,18 +34,18 @@ void pwdArgumentHandler(command* command) {
     }
     
     printError("Invalid argument for the command pwd. Expected argument : -L or -P.\n");
-    command->success = FALSE;
+    command->success = ERROR;
 }
 
 commandResult* pwdCommandRunner(command* command) {
     pwdArgumentHandler(command);
-    if (command->success == FALSE) return buildCommandResult(FALSE, "");
+    if (command->success == FALSE) return buildCommandResult(ERROR, "");
 
     //Cas -P : on affiche getcwd()
     switch (command->logicalRef) {
         case TRUE : return pwdLogical(command);
         case FALSE: return pwdPhysical(command);
-        default   : return buildCommandResult(FALSE, "");
+        default   : return buildCommandResult(ERROR, "");
     }
 }
 

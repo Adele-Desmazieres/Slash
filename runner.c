@@ -17,8 +17,21 @@
 
 #define PATH_MAX 4096
 
+void trim(char* stringToTrim) {
+    int length = strlen(stringToTrim);
+    int iterator = 1;
+    while((length - iterator) != 0) {
+        char tempCharacter = stringToTrim[length-iterator];
+
+        if (tempCharacter == ' ' || tempCharacter == '\r') {
+            stringToTrim[length-iterator] = '\0';
+        }
+        iterator++;
+    }
+}
+
 void readResult(command* command, commandResult* commandResult) {
-    if (commandResult->success == FALSE) {
+    if (commandResult->success == ERROR) {
         if (commandResult->resultMessage) printError(commandResult->resultMessage);
         return;
     }
@@ -45,17 +58,15 @@ commandResult* commandProcessHandler(command* command, int lastCommandState) {
         case -1: break;
         case 0: dup2(STDOUT_FILENO, STDERR_FILENO);
                 command->args = addFinalNull(command->args, command->argNumber);
-                execv(command->name, command->args);
+                //execv(command->name, command->args);
                 execvp(command->name, command->args);
                 exit(127);
         default: 
                 waitpid(r, &result, 0);
-                if (WEXITSTATUS(result) == 127) break;
-                int tempReturnValue;
-                if (WEXITSTATUS(result) == 2 || WEXITSTATUS(result) == 15) 
-                    tempReturnValue = 255;
-                else tempReturnValue = (WEXITSTATUS(result)) ? 1 : 0;
-                return buildCommandResult(!tempReturnValue, NULL);
+                //if (WEXITSTATUS(result) == 127); break;
+                int resultStatus = WEXITSTATUS(result);
+                int tempReturnValue = (resultStatus == 2 || resultStatus == 15) ? 255 : resultStatus;
+                return buildCommandResult(tempReturnValue, NULL);
     }
     //Commande inconnue
     commandResult* finalRes = buildCommandResult(FALSE, "Command unknown.\n");
@@ -87,6 +98,7 @@ int main(int argc, char *argv[]) {
     char* prompt;
     while (( line = readline((prompt = printPrompt(returnValue, getenv("PWD"))))) != NULL) {
         free(prompt);
+        trim(line);
         char** parsedLine;
 
         int nbrArgs = countArgs(line);
@@ -107,6 +119,7 @@ int main(int argc, char *argv[]) {
         //printParsed(parsedLine, nbrArgs);
         //freeParsedLine(parsedLine, nbrArgs);
 
+        //printf("TRUE %d, RESULT %d, isFatal : %d\n", TRUE, result->fatal, (result->fatal == 0));
         if (result->fatal == TRUE) { 
             freeCommand(commande);
             int exitCode = result->exitCode;
@@ -116,7 +129,7 @@ int main(int argc, char *argv[]) {
         }
         readResult(commande, result);
         freeCommand(commande);
-        returnValue = (result->success == TRUE) ? 0 : 1;
+        returnValue = result->success;
         freeCommandResult(result);
         free(line);
     }
