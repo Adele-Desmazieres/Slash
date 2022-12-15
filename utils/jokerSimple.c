@@ -242,18 +242,23 @@ void parcourirRepertoire (pathList* p, int depth, int maxDepth, const char* curr
     //Si on rencontre .. on remonte dans l'arborescence;
     if(strcmp(suffixe, "./") == 0) {
         parcourirRepertoire(p, depth+1, maxDepth, mergeFilePathAndName(currPath, ".", 1), pathArray, 0, 0);
+        free(currPathCpy);
+        free(suffixe);
         return;
     }
     if(strcmp(suffixe, "../") == 0) {
         parcourirRepertoire(p, depth+1, maxDepth, mergeFilePathAndName(currPath, "..", 1), pathArray, 0, 0);
+        free(currPathCpy);
+        free(suffixe);
         return;
     }
 
     printf("Suffixe courant = %s\n", suffixe);
     int searchDir = 0;
-    if (suffixe[strlen(suffixe)-1] == '/') {
+    int suffixeSize = strlen(suffixe);
+    if (suffixeSize != 0 && suffixe[suffixeSize-1] == '/') {
         searchDir = 1;
-        suffixe[strlen(suffixe)-1] = '\0';
+        suffixe[suffixeSize] = '\0';
     }
     printf("Suffixe courant après modif bizarre = %s \n", suffixe);
     //if (strcmp("*", suffixe) == 0) allRepertoire = 1;
@@ -282,12 +287,13 @@ void parcourirRepertoire (pathList* p, int depth, int maxDepth, const char* curr
         int pathSize = (strlen(pathToOpen) + strlen(de->d_name) +1);
         char* currFilePath = malloc(pathSize * sizeof(char));
         snprintf(currFilePath, pathSize, "%s%s", pathToOpen, de->d_name);
-        printf("SEARCHING : %s\n", currFilePath);
+        //printf("SEARCHING : %s\n", currFilePath);
         if(stat(currFilePath, &st) < 0) perror(" erreur stat() : jokerSimple");
+        free(currFilePath);
         if (searchDir && !S_ISDIR(st.st_mode)) continue;
         //printf("NAME %s SERCH %d and ISFILE %d (%d)\n", de->d_name, searchDir, !S_ISDIR(st.st_mode), st.st_ino);
         //On récupère les infos du fichier courant
-        printf("%s is suffix : %d\n", de->d_name, isSuffix(de->d_name, suffixe));
+        //printf("%s is suffix : %d\n", de->d_name, isSuffix(de->d_name, suffixe));
         if ( isSuffix(de->d_name, suffixe) ){
             //printf("IsSuffix(. ..) %d \n", isSuffix(".", ".."));
             //On fait une copie locale du chemin
@@ -464,6 +470,7 @@ char** expansionJokers(char** args, int len, int* newLen) {
                 ajouterPath(listeDesArgs, argument);
                 nbArgs++;
             }
+            free(tmp);
         } else {
             ajouterPath(listeDesArgs, argument);
             nbArgs += 1;

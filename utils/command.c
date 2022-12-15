@@ -27,6 +27,12 @@ command* buildCommand(char** commandLine, int argNumber) {
     return newCommand;
 }
 
+void alterCommandArgs(command *c, char** newArgs, int newArgNumber) {
+    c->argNumber = newArgNumber;
+    c->args = newArgs;
+    c->name = newArgs[0];
+}
+
 void freeCommand (command* c){
     free(c->targetRef);
     free(c);
