@@ -105,7 +105,7 @@ int main(int argc, char *argv[]) {
         
         commandResult* result = commandProcessHandler(commande, returnValue);
         //printParsed(parsedLine, nbrArgs);
-        freeParsedLine(parsedLine, nbrArgs);
+        //freeParsedLine(parsedLine, nbrArgs);
 
         if (result->fatal == TRUE) { 
             freeCommand(commande);
@@ -120,6 +120,8 @@ int main(int argc, char *argv[]) {
         freeCommandResult(result);
         free(line);
     }
+
+    if(prompt != NULL) free(prompt);
 
 
     /*étant donné que exit ne fait qu'utiliser la fonction exit(), qui est ici, dans le main, 

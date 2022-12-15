@@ -28,6 +28,7 @@ command* buildCommand(char** commandLine, int argNumber) {
 }
 
 void alterCommandArgs(command *c, char** newArgs, int newArgNumber) {
+    freeParsedLine(c->args, c->argNumber);
     c->argNumber = newArgNumber;
     c->args = newArgs;
     c->name = newArgs[0];
@@ -35,6 +36,7 @@ void alterCommandArgs(command *c, char** newArgs, int newArgNumber) {
 
 void freeCommand (command* c){
     free(c->targetRef);
+    freeParsedLine(c->args, c->argNumber);
     free(c);
     return;
 }

@@ -83,11 +83,17 @@ char* getSuffix(const char* path){
 
 
 void freepathList(pathList* arr){
-    for(listNode* tmp = arr->first; tmp != NULL;){
+    
+    listNode* tmp = arr->first;
+
+    while (tmp != NULL)
+    {
         free(tmp->content);
-        listNode* tmp2 = tmp;
+        listNode* toFree = tmp;
         tmp = tmp->next;
-        free(tmp2);
+        free(toFree);
+
+
     }
 
     free(arr);
@@ -218,7 +224,7 @@ char* mergeFilePathAndName(const char* path, char* filename, int isDir) {
 
 void parcourirRepertoire (pathList* p, int depth, int maxDepth, const char* currPath, char** pathArray, int start, int doubles){
     if(depth == maxDepth) return;
-    printf("PP : %s\n", currPath);
+    //printf("PP : %s\n", currPath);
     struct dirent* de;
     DIR* dir;
     struct stat st;
@@ -232,7 +238,7 @@ void parcourirRepertoire (pathList* p, int depth, int maxDepth, const char* curr
     char* currentPredicat = pathArray[depth];
     while ((depth < maxDepth-1) && strcmp(pathArray[depth+1], "/") == 0) {
         depth++;
-        printf("Current : %d/%d\n", depth, maxDepth);
+        //printf("Current : %d/%d\n", depth, maxDepth);
     }
     
     //Trouver suffixe du répertoire courant s'il existe, ouvrir le bon repertoire sinon
@@ -253,14 +259,14 @@ void parcourirRepertoire (pathList* p, int depth, int maxDepth, const char* curr
         return;
     }
 
-    printf("Suffixe courant = %s\n", suffixe);
+    //printf("Suffixe courant = %s\n", suffixe);
     int searchDir = 0;
     int suffixeSize = strlen(suffixe);
     if (suffixeSize != 0 && suffixe[suffixeSize-1] == '/') {
         searchDir = 1;
-        suffixe[suffixeSize] = '\0';
+        suffixe[suffixeSize-1] = '\0';
     }
-    printf("Suffixe courant après modif bizarre = %s \n", suffixe);
+    //printf("Suffixe courant après modif bizarre = %s \n", suffixe);
     //if (strcmp("*", suffixe) == 0) allRepertoire = 1;
     //printf("nom du suffixe courant : %s\n", suffixe);
     //printf("AllRepertoire = %d \n", allRepertoire);
@@ -306,7 +312,7 @@ void parcourirRepertoire (pathList* p, int depth, int maxDepth, const char* curr
             if(depth == maxDepth-1) {
                 //On ajoute ce nom à la liste
                 int tmpLen = strlen(currPathCpy2)-1;
-                if (currPathCpy2[tmpLen] == '.') currPathCpy2[tmpLen] = '\0';
+                if (currPathCpy2[tmpLen] == '/') currPathCpy2[tmpLen] = '\0';
                 ajouterPath(p,currPathCpy2);
             }else {
                 parcourirRepertoire(p, depth+1, maxDepth, currPathCpy2, pathArray, 0, 0);
@@ -462,7 +468,7 @@ char** expansionJokers(char** args, int len, int* newLen) {
         
         char* argument = args[i];
         if (containsSimpleJoker(argument)) {
-            printf("Test for args : %s\n", argument);
+            //printf("Test for args : %s\n", argument);
             pathList* tmp = jokerSimple(argument);
             listeDesArgs = concatList(listeDesArgs, tmp);
             nbArgs += tmp->len;
@@ -470,7 +476,7 @@ char** expansionJokers(char** args, int len, int* newLen) {
                 ajouterPath(listeDesArgs, argument);
                 nbArgs++;
             }
-            free(tmp);
+            freepathList(tmp);
         } else {
             ajouterPath(listeDesArgs, argument);
             nbArgs += 1;
