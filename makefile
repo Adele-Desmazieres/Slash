@@ -7,7 +7,7 @@ ALL= runner *.o ./command/*.o ./utils/*.o slash
 
 # RUNNER
 slash: utils.o commands.o runner.o
-	gcc ./utils/*.o ./command/*.o runner.o -o slash -lreadline -ltinfo
+	gcc ./utils/*.o ./command/*.o runner.o -o slash -lreadline -ltinfo -lm
 
 runner.o : runner.c
 	gcc -c ./runner.c -o ./runner.o

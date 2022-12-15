@@ -4,8 +4,8 @@
 #define TRUE 1
 #define FALSE 0
 
-#define SUCCESS 101
-#define ERROR 100
+#define SUCCESS 0
+#define ERROR 1
 
 #define MAX_ARGS_NUMBER 4096
 #define MAX_ARGS_STRLEN 4096

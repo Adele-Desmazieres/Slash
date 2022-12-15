@@ -175,7 +175,7 @@ commandResult* cdLogical(command* command, char* target) {
 	}
 		
 	// si échec en logique, alors cd en physique
-	if (ret->success) {
+	if (ret->success == ERROR) {
 		command->logicalRef = FALSE;
 		freeCommandResult(ret);
 		ret = setTargetToDirectory(command, target);

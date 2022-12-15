@@ -43,16 +43,19 @@ void readResult(command* command, commandResult* commandResult) {
 commandResult* commandProcessHandler(command* command, int lastCommandState) {   
     pid_t r;
     int result; 
-    if ( strcmp(command->name, "exit") == 0 ) return exitCommandRunner(command, lastCommandState);
-    if ( strcmp(command->name, "cd") == 0 ) return cdCommandRunner(command);
-    if ( strcmp(command->name, "pwd") == 0 ) return pwdCommandRunner(command);
-    
-    // expansion des jokers pour les commandes externes
+
+// expansion des jokers pour les commandes externes
     int *newArgNb = Malloc(sizeof(int), "NewArgAmount - Error");
     char** expanded = expansionJokers(command->args, command->argNumber, newArgNb);
     alterCommandArgs(command, expanded, *newArgNb);
     free(newArgNb);
     //printParsed(expanded, command->argNumber);
+
+    if ( strcmp(command->name, "exit") == 0 ) return exitCommandRunner(command, lastCommandState);
+    if ( strcmp(command->name, "cd") == 0 ) return cdCommandRunner(command);
+    if ( strcmp(command->name, "pwd") == 0 ) return pwdCommandRunner(command);
+    
+    
     
     switch(r = fork()) {
         case -1: break;
@@ -98,7 +101,7 @@ int main(int argc, char *argv[]) {
     char* prompt;
     while (( line = readline((prompt = printPrompt(returnValue, getenv("PWD"))))) != NULL) {
         free(prompt);
-        trim(line);
+        //trim(line);
         char** parsedLine;
 
         int nbrArgs = countArgs(line);

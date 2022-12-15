@@ -247,13 +247,17 @@ void parcourirRepertoire (pathList* p, int depth, int maxDepth, const char* curr
     //Si on rencontre . on ne change pas le dossier de recherche
     //Si on rencontre .. on remonte dans l'arborescence;
     if(strcmp(suffixe, "./") == 0) {
-        parcourirRepertoire(p, depth+1, maxDepth, mergeFilePathAndName(currPath, ".", 1), pathArray, 0, 0);
+        char* merged = mergeFilePathAndName(currPath, ".", 1);
+        parcourirRepertoire(p, depth+1, maxDepth, merged, pathArray, 0, 0);
+        free(merged);
         free(currPathCpy);
         free(suffixe);
         return;
     }
     if(strcmp(suffixe, "../") == 0) {
-        parcourirRepertoire(p, depth+1, maxDepth, mergeFilePathAndName(currPath, "..", 1), pathArray, 0, 0);
+        char* merged = mergeFilePathAndName(currPath, "..", 1);
+        parcourirRepertoire(p, depth+1, maxDepth, merged, pathArray, 0, 0);
+        free(merged);
         free(currPathCpy);
         free(suffixe);
         return;
