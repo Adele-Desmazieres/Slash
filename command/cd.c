@@ -24,10 +24,10 @@ commandResult* cdTarget(command* command) {
 	if (chdir(tmp) == 0) {
 		free(tmp);
 		tmp = malloc(sizeof(char) * MAX_ARGS_STRLEN);
-		if (tmp == NULL) return buildFatalCommandResult(FALSE, "realloc échoué", 1);
+		if (tmp == NULL) return buildFatalCommandResult(ERROR, "realloc échoué", 1);
 		if (getcwd(tmp, sizeof(char) * MAX_ARGS_STRLEN) == NULL) {
 			free(tmp);
-			return buildFatalCommandResult(FALSE, "getcwd échoué", 1);
+			return buildFatalCommandResult(ERROR, "getcwd échoué", 1);
 		}
 		
 		error += setenv("OLDPWD", getenv("PWD"), 1); // maintient le répertoire précédent à jour
@@ -38,12 +38,12 @@ commandResult* cdTarget(command* command) {
 		
 		if (error == 0) {
 			free(tmp);
-			return buildCommandResult(TRUE, NULL);
+			return buildCommandResult(SUCCESS, NULL);
 		}
-		else res = buildFatalCommandResult(FALSE, "setenv échoué", 1);
+		else res = buildFatalCommandResult(ERROR, "setenv échoué", 1);
 		
 	} else {
-		res = buildCommandResult(FALSE, "Répertoire non trouvé.\n");
+		res = buildCommandResult(ERROR, "Répertoire non trouvé.\n");
 	}
 	free(tmp);
 	return res;
@@ -56,7 +56,7 @@ commandResult* setTargetToDirectory(command* command, char* target) {
 	command->targetRef = malloc(sizeof(char) * (strlen(target) + 1));
 	if (command->targetRef == NULL) {
 		free(target);
-		return buildFatalCommandResult(FALSE, "malloc échoué", 1);
+		return buildFatalCommandResult(ERROR, "malloc échoué", 1);
 	}
 	strcpy(command->targetRef, target);
 	free(target);
@@ -175,7 +175,7 @@ commandResult* cdLogical(command* command, char* target) {
 	}
 		
 	// si échec en logique, alors cd en physique
-	if (!ret->success) {
+	if (ret->success == ERROR) {
 		command->logicalRef = FALSE;
 		freeCommandResult(ret);
 		ret = setTargetToDirectory(command, target);
@@ -193,7 +193,7 @@ commandResult* setTargetToEnvVar(command* command, char* envVarName) {
 	
 	if (getenv(envVarName)) {
 		char* buff = malloc(sizeof(char) * (strlen(getenv(envVarName)) + 1) );
-		if (buff == NULL) return buildFatalCommandResult(FALSE, "malloc échoué", 1);
+		if (buff == NULL) return buildFatalCommandResult(ERROR, "malloc échoué", 1);
 		
 		strcpy(buff, getenv(envVarName));
 		command->targetRef = buff;
@@ -202,7 +202,7 @@ commandResult* setTargetToEnvVar(command* command, char* envVarName) {
 	} else {
 		// TODO GERTER LE MALLOC DE YANIS DANS COMMAND.C pour pouvoir malloc tous les mess d'erreur
 		// afin d'afficher le nom de la var non initialisée via concaténation
-		return buildCommandResult(FALSE, "Variable d'environnement non définie.\n");
+		return buildCommandResult(ERROR, "Variable d'environnement non définie.\n");
 	}
 }
 
@@ -245,12 +245,12 @@ commandResult* cdCommandRunner(command* command) {
 				strcpy(tmp, command->args[2]);
 				commandResult = setTargetToDirectory(command, tmp);
 			} else {
-				commandResult = buildCommandResult(FALSE, "Invalid argument for the command cd. Expected command format : cd [-L | -P | - ] [ref].\n");
+				commandResult = buildCommandResult(ERROR, "Invalid argument for the command cd. Expected command format : cd [-L | -P | - ] [ref].\n");
 			}
 			break;
 		
 		default :
-			commandResult = buildCommandResult(FALSE, "Invalid argument for the command cd. Expected command format : cd [-L | -P | - ] [ref].\n");
+			commandResult = buildCommandResult(ERROR, "Invalid argument for the command cd. Expected command format : cd [-L | -P | - ] [ref].\n");
 		
 	}
 	return commandResult;

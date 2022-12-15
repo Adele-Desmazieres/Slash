@@ -28,6 +28,8 @@ int containsSimpleJoker (const char* path){
 
 
 int isSuffix(const char* str, const char* suffix){
+    if(strcmp(str, ".") == 0 && strcmp(suffix, "..") == 0) return 0;
+    if(strcmp(str, "..") == 0 && strcmp(suffix, ".") == 0) return 0;
     int minLen = (strlen(str) > strlen(suffix)) ? strlen(suffix) : strlen(str);
     str += strlen(str) - 1;
     suffix += strlen(suffix) - 1;
@@ -42,17 +44,17 @@ int isSuffix(const char* str, const char* suffix){
 }
 
 char* getSuffix(const char* path){
-
     if(!containsSimpleJoker(path)){
         char* ret = malloc(sizeof(char)*(strlen(path)+1));
         if(ret == NULL) perror("malloc @ getSuffix equals");
         strcpy(ret,path);
         return ret;
     }else{
-
         if(path[strlen(path) - 1] == '*'){
-            char* tmp = malloc(sizeof(char) * 2); tmp[0] = '*'; tmp[1] = '\0'; return tmp;
+            char* tmp = malloc(sizeof(char)); tmp[0] = '\0'; 
+            return tmp;
         }
+
 
         char* tmp = malloc(sizeof(char) * (strlen(path)+1));
         if(tmp == NULL) perror("Erreur malloc getSuffix ");
@@ -81,11 +83,17 @@ char* getSuffix(const char* path){
 
 
 void freepathList(pathList* arr){
-    for(listNode* tmp = arr->first; tmp != NULL;){
+    
+    listNode* tmp = arr->first;
+
+    while (tmp != NULL)
+    {
         free(tmp->content);
-        listNode* tmp2 = tmp;
+        listNode* toFree = tmp;
         tmp = tmp->next;
-        free(tmp2);
+        free(toFree);
+
+
     }
 
     free(arr);
@@ -117,7 +125,9 @@ void ajouterPath (pathList* p, const char* path){
         return;
     }
     listNode* tmp = p->first;
-    while(tmp->next != NULL) tmp = tmp->next;
+    while(tmp->next != NULL) {
+        tmp = tmp->next;
+    }
     tmp->next = nouv;
     p->len++;
     return;
@@ -135,30 +145,28 @@ pathList* concatList(pathList* dest, pathList* src){
 
 
 int countArgsJoker(const char* c) {
-    
+   
     while(*c == '/'){
         if(*c == '\0') return 0;
         c++;
-    } 
-    int count = 1;
-    while ( *c != '\0'){
-        if (*c == '/'){
-            count++;
-            while (*c == '/'){
-                if (*c == '\0') return count;
-                c++;
-            } 
-        }
-        c++;
     }
+
+    int count = 1;
+    int len = strlen(c);
+    for (int i = 0; i < len-1; i++) {
+        if (c[i] == '/' && c[i+1] != '\0' ) count++;
+    }
+    
     return count;
 }
 
 
 int sizeOfTokenJoker(const char* c){
     int size = 0;
-    while(*c != '\0' && *c != '/'){
-        size++; c++;
+    while(*c != '\0'){
+        size++; 
+        if(*c == '/') return size;
+        c++;
     }
     return size;
 }
@@ -168,112 +176,155 @@ char** parseLineJoker(const char* line, char** parsedLine) {
         if (*line == '\0') return parsedLine;
         line++;
     }
-    
     int iterator = 0;
     while(*line != '\0'){
-        if(*line != '/'){
+        //if(*line != '/'){
             int tokenSize = sizeOfTokenJoker(line);
-            parsedLine[iterator] = calloc (sizeof(char) , (1 + tokenSize));
+            //if(line[tokenSize-1] == '/') tokenSize--;
+            parsedLine[iterator] = calloc ((1 + tokenSize), sizeof(char));
             strncat(parsedLine[iterator], line, tokenSize);
-            parsedLine[iterator++][tokenSize] = '\0';
+            parsedLine[iterator][tokenSize] = '\0';
+            iterator++;
             line += tokenSize;
             if(*line == '\0') return parsedLine; 
-        }
-        line++;
+        //}
+        if (tokenSize == 0) line++;
     }
-    
     return parsedLine;
 }
 
 void freeParsedLineJoker(char** parsedLine, int parseLineLength) {
     for (int i = 0; i < parseLineLength; i++) {
-        free(parsedLine[i]);
+        if(parsedLine[i]) free(parsedLine[i]);
     }
     free(parsedLine);
 }
 
-void parcourirRepertoire (pathList* p, int depth, int maxDepth, const char* currPath, char** pathArray, int start, int doubles){
+char* deleteCurrDirOnPath(char* path) {
+    int len = strlen(path);
+    if(len == 0) return path;
+    path[len-1] = '\0';
+    while(path[len-1] != '/') {
+        path[len-1] = '\0';
+        len--;
+    }
+    if (len <= 0) return path;
+    return path;
+}
 
+char* mergeFilePathAndName(const char* path, char* filename, int isDir) {
+    char* filePath = malloc((strlen(path)+2+strlen(filename)+1) * sizeof(char));
+    if(filePath == NULL) perror("erreur malloc");
+    strcpy(filePath, path);
+    strcat(filePath, filename);
+    if (isDir && strcmp(filePath, "./") != 0) strcat(filePath, "/");
+
+    return filePath;
+}
+
+void parcourirRepertoire (pathList* p, int depth, int maxDepth, const char* currPath, char** pathArray, int start, int doubles){
+    if(depth == maxDepth) return;
+    //printf("PP : %s\n", currPath);
     struct dirent* de;
     DIR* dir;
     struct stat st;
 
+    char * pathIsHere = "./";
     char* currPathCpy = malloc((strlen(currPath)+1) * sizeof(char));
     if(currPathCpy == NULL) perror("erreur malloc");
     strcpy(currPathCpy, currPath);
     //printf("nom du chemin courant : %s\n", currPathCpy);
     
-    int allRepertoire = 0;
-
-    //Trouver suffixe du répertoire courant s'il existe, ouvrir le bon repertoire sinon
-    char* suffixe = getSuffix(pathArray[depth]);
-    if (strcmp("*", suffixe) == 0) allRepertoire = 1;
-    //printf("nom du suffixe courant : %s\n", suffixe);
-
-
-    //Si depth = maxDepth - 1, alors ajouter à p tous les fichiers qui correspond au suffixe courant
-    if(depth >= maxDepth - 1){
-        //Si on ne peut pas ouvrir le répertoire, alors on abandonne cet appel == répertoire inexistant ou pas accès
-        if ((dir = opendir(currPathCpy)) == NULL){
-            //printf("itération sur %s échouée\n", currPathCpy);
-            free(suffixe);
-            free(currPathCpy);
-            return;
-        } 
-        while ((de = readdir(dir)) != NULL ){
-            //On passe . et ..
-            if( de->d_name[0] == '.') continue;
-            if ((allRepertoire || isSuffix(de->d_name, suffixe))){
-                //On fait une copie locale du chemin
-                //printf("Fichier: %s \n", de->d_name);
-                char* currPathCpy2 = malloc((strlen(currPath)+2+strlen(de->d_name)+1) * sizeof(char));
-                if(currPathCpy2 == NULL) perror("erreur malloc");
-                strcpy(currPathCpy2, currPathCpy);
-                if (start == 0 || doubles == 1) strcat(currPathCpy2, "/");
-                //On ajoute le nom du fichier courant à la copie du path
-                strcat(currPathCpy2, de->d_name);
-                //On ajoute ce nom à la liste
-                //printf("test à l'ajout\n");
-                ajouterPath(p,currPathCpy2);
-                free(currPathCpy2);
-            }
-        }
-        closedir(dir);
-    } else {
-        
-        //Ouvrir répertoire courant, parcourir, et si il existe un fichier qui correspond au suffixe / nom alors appel récursif dessus
-        //NE PAS OUBLIER DE METTRE A JOUR LE REPERTOIRE COURANT SUR UNE ITERATION
-
-        //Si on ne peut pas ouvrir le répertoire, alors on abandonne cet appel == répertoire inexistant ou pas accès
-        if ((dir = opendir(currPathCpy)) == NULL){
-            //printf("itération sur %s échouée\n", currPathCpy);
-            free(suffixe);
-            free(currPathCpy);
-            return;
-        }
-        while ((de = readdir(dir)) != NULL ){
-            //On passe . et ..
-            if( de->d_name[0] == '.') continue;
-            //On récupère les infos du fichier courant
-            if( (stat(currPathCpy, &st) < 0)) perror(" erreur stat() : jokerSimple");
-            //printf("%d test %s\n",isSuffix(de->d_name, suffix), de->d_name);
-            //Si (le nom correspond au suffixe OU l'étoile est complète) et qu'il ne s'agit pas d'un lien symbolique et qu'il s'agit d'un répertoire
-            if (S_ISDIR(st.st_mode) && !(S_ISLNK(st.st_mode)) && (allRepertoire || isSuffix(de->d_name, suffixe)) ){
-                //On fait une copie locale du chemin
-                char* currPathCpy2 = malloc((strlen(currPath)+2+strlen(de->d_name)+1) * sizeof(char));
-                if(currPathCpy2 == NULL) perror("erreur malloc");
-                strcpy(currPathCpy2, currPathCpy);
-                if(start == 0) strcat(currPathCpy2, "/");
-                //On ajoute le nom du répertoire courant à la copie du path
-                strcat(currPathCpy2, de->d_name);
-                //appel récursif sur ce répertoire
-                //printf("passage dans : %s\n", currPathCpy2);
-                parcourirRepertoire(p, depth+1, maxDepth, currPathCpy2, pathArray, 0, 0);
-                free(currPathCpy2);
-            }
-        }
-        closedir(dir);        
+    char* currentPredicat = pathArray[depth];
+    while ((depth < maxDepth-1) && strcmp(pathArray[depth+1], "/") == 0) {
+        depth++;
+        //printf("Current : %d/%d\n", depth, maxDepth);
     }
+    
+    //Trouver suffixe du répertoire courant s'il existe, ouvrir le bon repertoire sinon
+    char* suffixe = getSuffix(currentPredicat);
+
+    //Si on rencontre . on ne change pas le dossier de recherche
+    //Si on rencontre .. on remonte dans l'arborescence;
+    if(strcmp(suffixe, "./") == 0) {
+        char* merged = mergeFilePathAndName(currPath, ".", 1);
+        parcourirRepertoire(p, depth+1, maxDepth, merged, pathArray, 0, 0);
+        free(merged);
+        free(currPathCpy);
+        free(suffixe);
+        return;
+    }
+    if(strcmp(suffixe, "../") == 0) {
+        char* merged = mergeFilePathAndName(currPath, "..", 1);
+        parcourirRepertoire(p, depth+1, maxDepth, merged, pathArray, 0, 0);
+        free(merged);
+        free(currPathCpy);
+        free(suffixe);
+        return;
+    }
+
+    //printf("Suffixe courant = %s\n", suffixe);
+    int searchDir = 0;
+    int suffixeSize = strlen(suffixe);
+    if (suffixeSize != 0 && suffixe[suffixeSize-1] == '/') {
+        searchDir = 1;
+        suffixe[suffixeSize-1] = '\0';
+    }
+    //printf("Suffixe courant après modif bizarre = %s \n", suffixe);
+    //if (strcmp("*", suffixe) == 0) allRepertoire = 1;
+    //printf("nom du suffixe courant : %s\n", suffixe);
+    //printf("AllRepertoire = %d \n", allRepertoire);
+
+    //printf("Profondeur courante = %d ; Profondeur max = %d ; Condition de terminaison? %d \n\n\n", depth, maxDepth, (depth >= maxDepth - 1));
+    //Si depth = maxDepth - 1, alors ajouter à p tous les fichiers qui correspond au suffixe courant
+
+    //Si on ne peut pas ouvrir le répertoire, alors on abandonne cet appel == répertoire inexistant ou pas accès
+    char* pathToOpen = (strcmp(currPathCpy, "") == 0) ? pathIsHere : currPathCpy;
+    if ((dir = opendir(pathToOpen)) == NULL){
+        //printf("itération sur %s échouée\n", currPathCpy);
+        free(suffixe);
+        free(currPathCpy);
+        return;
+    }
+    
+    while ((de = readdir(dir)) != NULL){
+        //On ignore tout les dossiers cachés
+        //Si c'est . et que depth = max-1 passe
+        //Sinon si c'est .. et que depth = max-1 passe
+        //Sinon si ça commence par . ça passe pas
+        if(de->d_name[0] == '.') continue;
+
+        int pathSize = (strlen(pathToOpen) + strlen(de->d_name) +1);
+        char* currFilePath = malloc(pathSize * sizeof(char));
+        snprintf(currFilePath, pathSize, "%s%s", pathToOpen, de->d_name);
+        //printf("SEARCHING : %s\n", currFilePath);
+        if(stat(currFilePath, &st) < 0) perror(" erreur stat() : jokerSimple");
+        free(currFilePath);
+        if (searchDir && !S_ISDIR(st.st_mode)) continue;
+        //printf("NAME %s SERCH %d and ISFILE %d (%d)\n", de->d_name, searchDir, !S_ISDIR(st.st_mode), st.st_ino);
+        //On récupère les infos du fichier courant
+        //printf("%s is suffix : %d\n", de->d_name, isSuffix(de->d_name, suffixe));
+        if ( isSuffix(de->d_name, suffixe) ){
+            //printf("IsSuffix(. ..) %d \n", isSuffix(".", ".."));
+            //On fait une copie locale du chemin
+            char* basePath = (strcmp(pathToOpen, "./") == 0) ? "" : pathToOpen;
+            if (strcmp(currPath, "./") == 0) basePath = "./";
+            char* currPathCpy2 = mergeFilePathAndName(basePath, de->d_name, S_ISDIR(st.st_mode));
+            //printf("MATCHING : %s\n", currPathCpy2);
+            //On ajoute le nom du fichier courant à la copie du path
+            //printf("test à l'ajout\n");
+            if(depth == maxDepth-1) {
+                //On ajoute ce nom à la liste
+                int tmpLen = strlen(currPathCpy2)-1;
+                if (currPathCpy2[tmpLen] == '/') currPathCpy2[tmpLen] = '\0';
+                ajouterPath(p,currPathCpy2);
+            }else {
+                parcourirRepertoire(p, depth+1, maxDepth, currPathCpy2, pathArray, 0, 0);
+            }
+            free(currPathCpy2);
+        }
+    }
+    closedir(dir);
 
     //Libération de la mémoire
     free(suffixe);
@@ -291,6 +342,7 @@ void parcoursDouble(pathList* p, int depth, int maxDepth, const char* currPath, 
     if(currPathCpy == NULL) perror("erreur malloc");
     strcpy(currPathCpy, currPath);
     //printf("nom du chemin courant : %s\n", currPathCpy);
+    int allRepertoire = 0;
 
     //Trouver suffixe du répertoire courant s'il existe, ouvrir le bon repertoire sinon
     char* suffixe = getSuffix(pathArray[0]);
@@ -346,7 +398,6 @@ pathList* jokerSimple(char* orPath){
     if(strlen(orPathCpy) >= 3 && orPath[0] == '*' && orPath[1] == '*' && orPath[2] == '/'){
         orPathCpy += 3; doubleJoker = 1;
     }
-
     //Comptage des arguments pour le tableau
     int maxDepth = countArgsJoker(orPathCpy);
     
@@ -357,22 +408,22 @@ pathList* jokerSimple(char* orPath){
     char** args = malloc(sizeof(char *) * maxDepth);
     if(args == NULL) perror("erreur malloc");
     args = parseLineJoker(orPathCpy, args);
-    //printf("%d\n", maxDepth);
+    //printf("nombre d'arguments / profondeur du chemin = %d\n", maxDepth);
 
     //Chemin absolu ou relatif
     if(*(orPathCpy) == '/') pathCpy = "/";
-    else pathCpy = "./";
+    else pathCpy = "";
 
     //printf("%s\n",pathCpy);
-
     //printParsedJoker(args, maxDepth);
     //Appel initial sur le répertoire au début du chemin
-    if(doubleJoker == 0) parcourirRepertoire(ret, 0, maxDepth, pathCpy, args, 1, 0);
-    else {
+    if(doubleJoker == 0) {
+        parcourirRepertoire(ret, 0, maxDepth, pathCpy, args, 1, 0);
+    }else {
         parcourirRepertoire(ret, 0, maxDepth, pathCpy, args, 1, 0);
         parcoursDouble(ret, 0, maxDepth, pathCpy, args, 1);
     }
-    //printf("test2\n");
+    //printParsedJoker(args, maxDepth);
     freeParsedLineJoker(args, maxDepth);
     if(doubleJoker) orPathCpy -= 3;
     free(orPathCpy);
@@ -413,7 +464,6 @@ char** pathListToArray(pathList* p){
 // Prend en argument un tableau de string représentant les arguments de la commande
 // Renvoie un tableau de string des arguments, dont les joker ont été interprêtés
 char** expansionJokers(char** args, int len, int* newLen) {
-    
     pathList* listeDesArgs = creerPathList();
     int nbArgs = 0;
     int i = 0;
@@ -421,18 +471,20 @@ char** expansionJokers(char** args, int len, int* newLen) {
     while (i < len) {
         
         char* argument = args[i];
-        
         if (containsSimpleJoker(argument)) {
-            
+            //printf("Test for args : %s\n", argument);
             pathList* tmp = jokerSimple(argument);
             listeDesArgs = concatList(listeDesArgs, tmp);
             nbArgs += tmp->len;
-            
+            if (tmp->len == 0) {
+                ajouterPath(listeDesArgs, argument);
+                nbArgs++;
+            }
+            freepathList(tmp);
         } else {
             ajouterPath(listeDesArgs, argument);
             nbArgs += 1;
         }
-        
         i++;
     }
     *newLen = nbArgs;

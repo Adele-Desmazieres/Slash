@@ -1,6 +1,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <math.h>
 #include "printing.h"
 
 /**
@@ -68,21 +69,24 @@ void printError(char* message) {
  * @param path the path of the current directory
  */
 char* printPrompt(int lastCommandResult, char* path) {
-    char* tmp = malloc(sizeof(char)*46);
+    char* tmp = malloc(sizeof(char)*48);
     int reduced = 0;
     char* pathToPrint = path;
-    int maxPathLenght = (lastCommandResult == 255) ? 23 : MAX_PATH_PROMPT_LENGTH;
+    int resultCodeLen = 0;
+    if (lastCommandResult >=10) resultCodeLen = floor(log10(abs(lastCommandResult)));
+
+    int maxPathLenght = MAX_PATH_PROMPT_LENGTH - resultCodeLen;
     if (strlen(path) > maxPathLenght) {
         reduced = 1;
         pathToPrint = reducePathPromptLenght(maxPathLenght);
     }
 
-    if (lastCommandResult == 1) {
-        snprintf(tmp, 46, "\033[91m[%d]\033[34m%s\033[00m$ ", lastCommandResult, pathToPrint);
+    if (lastCommandResult == 0) {
+        snprintf(tmp, 46+resultCodeLen, "\033[32m[%d]\033[34m%s\033[00m$ ", lastCommandResult, pathToPrint);
     }else if (lastCommandResult == 255) {
-        snprintf(tmp, 48, "\033[33m[SIG]\033[34m%s\033[00m$ ", pathToPrint+2);
+        snprintf(tmp, 48, "\033[33m[SIG]\033[34m%s\033[00m$ ", pathToPrint);
     }else {
-        snprintf(tmp, 46, "\033[32m[%d]\033[34m%s\033[00m$ ", lastCommandResult, pathToPrint);
+        snprintf(tmp, 46+resultCodeLen, "\033[91m[%d]\033[34m%s\033[00m$ ", lastCommandResult, pathToPrint);
     }
 
     if(reduced) free(pathToPrint);
