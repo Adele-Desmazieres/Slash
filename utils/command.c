@@ -1,7 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include "lineParser.h"
 #include "StringArray.h"
 #include "command.h"
 #include "./memory.h"
