@@ -211,7 +211,7 @@ commandResult* cdCommandRunner(command* command) {
 	command->logicalRef = TRUE; // par défaut en mode logique
 	commandResult* commandResult;
 	
-	switch (command->argNumber) {
+	switch (command->arguments->size) {
 		// "cd" -> home
 		case 1 : 
 			commandResult = setTargetToEnvVar(command, "HOME"); 
@@ -220,29 +220,29 @@ commandResult* cdCommandRunner(command* command) {
 		
 		// "cd -" -> OLDPWD OR "cd path/to/directory"
 		case 2 : 
-			if (strcmp(command->args[1], "-") == 0) {
+			if (strcmp(command->arguments->stringArr[1], "-") == 0) {
 				command->logicalRef = TRUE;
 				commandResult = setTargetToEnvVar(command, "OLDPWD"); 
 				
 			} else { // cd path/to/directory
 				command->logicalRef = TRUE;
-				char* tmp = Malloc(strlen(command->args[1])*sizeof(char)+1, "");
-				strcpy(tmp, command->args[1]);
+				char* tmp = Malloc(strlen(command->arguments->stringArr[1])*sizeof(char)+1, "");
+				strcpy(tmp, command->arguments->stringArr[1]);
 				commandResult = cdLogical(command, tmp); // si "cd path" sans option, alors logical
 			}
 			break;
 		
 		// "cd [-L | -P] path/to/directory"
 		case 3 :
-			//command->targetRef = command->args[2];
-			if (strcmp(command->args[1], "-L" ) == 0) {
-				char* tmp = Malloc(strlen(command->args[2])*sizeof(char)+1, "");
-				strcpy(tmp, command->args[2]);
+			//command->targetRef = command->arguments->stringArr[2];
+			if (strcmp(command->arguments->stringArr[1], "-L" ) == 0) {
+				char* tmp = Malloc(strlen(command->arguments->stringArr[2])*sizeof(char)+1, "");
+				strcpy(tmp, command->arguments->stringArr[2]);
 				commandResult = cdLogical(command, tmp); 
-			} else if (strcmp(command->args[1], "-P" ) == 0) {
+			} else if (strcmp(command->arguments->stringArr[1], "-P" ) == 0) {
 				command->logicalRef = FALSE;
-				char* tmp = Malloc(strlen(command->args[2])*sizeof(char)+1, "");
-				strcpy(tmp, command->args[2]);
+				char* tmp = Malloc(strlen(command->arguments->stringArr[2])*sizeof(char)+1, "");
+				strcpy(tmp, command->arguments->stringArr[2]);
 				commandResult = setTargetToDirectory(command, tmp);
 			} else {
 				commandResult = buildCommandResult(ERROR, "Invalid argument for the command cd. Expected command format : cd [-L | -P | - ] [ref].\n");

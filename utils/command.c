@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "lineParser.h"
+#include "StringArray.h"
 #include "command.h"
 #include "./memory.h"
 
@@ -15,28 +16,36 @@
  * @param argNumber The number of arguments for the command.
  * @return a pointer command* to the command informations.
  */
-command* buildCommand(char** commandLine, int argNumber) {
+command* buildCommand(char* commandLine) {
     command* newCommand = Malloc(sizeof(command), "");
-    newCommand->name = commandLine[0];
     newCommand->logicalRef = TRUE;
     newCommand->success = TRUE; //possiblement useless, on verra plus tard...
-    newCommand->args = commandLine;
-    newCommand->argNumber = argNumber;
+    newCommand->arguments = SA_parseString(commandLine);
+    newCommand->name = newCommand->arguments->stringArr[0];
     newCommand->targetRef = NULL;
+    newCommand->redirect.error = stderr;
+    newCommand->redirect.result = stderr;
 
     return newCommand;
 }
 
-void alterCommandArgs(command *c, char** newArgs, int newArgNumber) {
-    freeParsedLine(c->args, c->argNumber);
-    c->argNumber = newArgNumber;
-    c->args = newArgs;
-    c->name = newArgs[0];
+void alterCommandArgs(command *c, stringArr* newArgs) {
+    SA_free(c->arguments);
+    c->arguments = newArgs;
+    c->name = newArgs->stringArr[0];
+}
+
+void redirectErr(command *c, FILE* errorFile) {
+    c->redirect.error = errorFile;
+}
+
+void redirectResult(command *c, FILE* errorFile) {
+    c->redirect.result = errorFile;
 }
 
 void freeCommand (command* c){
     free(c->targetRef);
-    freeParsedLine(c->args, c->argNumber);
+    SA_free(c->arguments);
     free(c);
     return;
 }

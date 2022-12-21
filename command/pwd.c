@@ -27,8 +27,8 @@ commandResult* pwdLogical(command* command) {
 /* **************** */
 
 void pwdArgumentHandler(command* command) {
-    if (command->argNumber == 1 || strcmp( command->args[1], "-L" ) == 0) return;
-    if (strcmp( command->args[1], "-P" ) == 0) {
+    if (command->arguments->size == 1 || strcmp( command->arguments->stringArr[1], "-L" ) == 0) return;
+    if (strcmp( command->arguments->stringArr[1], "-P" ) == 0) {
         command->logicalRef = FALSE;
         return;
     }

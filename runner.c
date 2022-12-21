@@ -8,7 +8,6 @@
 #include "runner.h"
 #include "./utils/memory.h"
 #include "./utils/command.h"
-#include "./utils/lineParser.h"
 #include "./utils/printing.h"
 #include "./command/cd.h"
 #include "./command/pwd.h"
@@ -16,19 +15,6 @@
 #include "./utils/jokerSimple.h"
 
 #define PATH_MAX 4096
-
-void trim(char* stringToTrim) {
-    int length = strlen(stringToTrim);
-    int iterator = 1;
-    while((length - iterator) != 0) {
-        char tempCharacter = stringToTrim[length-iterator];
-
-        if (tempCharacter == ' ' || tempCharacter == '\r') {
-            stringToTrim[length-iterator] = '\0';
-        }
-        iterator++;
-    }
-}
 
 void readResult(command* command, commandResult* commandResult) {
     if (commandResult->success == ERROR) {
@@ -44,11 +30,9 @@ commandResult* commandProcessHandler(command* command, int lastCommandState) {
     pid_t r;
     int result; 
 
-// expansion des jokers pour les commandes externes
-    int *newArgNb = Malloc(sizeof(int), "NewArgAmount - Error");
-    char** expanded = expansionJokers(command->args, command->argNumber, newArgNb);
-    alterCommandArgs(command, expanded, *newArgNb);
-    free(newArgNb);
+    // expansion des jokers pour les commandes externes
+    stringArr* expanded = expansionJokers(command->arguments);
+    alterCommandArgs(command, expanded);
     //printParsed(expanded, command->argNumber);
 
     if ( strcmp(command->name, "exit") == 0 ) return exitCommandRunner(command, lastCommandState);
@@ -60,9 +44,9 @@ commandResult* commandProcessHandler(command* command, int lastCommandState) {
     switch(r = fork()) {
         case -1: break;
         case 0: dup2(STDOUT_FILENO, STDERR_FILENO);
-                command->args = addFinalNull(command->args, command->argNumber);
-                //execv(command->name, command->args);
-                execvp(command->name, command->args);
+                SA_addFinalNull(command->arguments);
+                //SA_print(command->arguments);
+                execvp(command->name, command->arguments->stringArr);
                 exit(127);
         default: 
                 waitpid(r, &result, 0);
@@ -104,23 +88,15 @@ int main(int argc, char *argv[]) {
         //trim(line);
         char** parsedLine;
 
-        int nbrArgs = countArgs(line);
-        if (nbrArgs == 0) continue;
-
         add_history(line);
-        //printf("displayed : %s\n", line);
-
-        // parser la ligne (mots et opérateurs séparés par des espaces)
-        parsedLine = Calloc(nbrArgs , sizeof(char *), "Erreur calloc");
-        parsedLine = parseLine(line, parsedLine);
-        //printParsed(parsedLine, nbrArgs);        
+        //printf("displayed : %s\n", line);        
     
         // initier un objet commande puis interprète la commande
-        command* commande = buildCommand(parsedLine, nbrArgs);
-        
+        command* commande = buildCommand(line);
+        if (commande->arguments->size == 0) continue;
+        //SA_print(commande->arguments);
+        //printf("NAME : -%s-\n", commande->name);
         commandResult* result = commandProcessHandler(commande, returnValue);
-        //printParsed(parsedLine, nbrArgs);
-        //freeParsedLine(parsedLine, nbrArgs);
 
         //printf("TRUE %d, RESULT %d, isFatal : %d\n", TRUE, result->fatal, (result->fatal == 0));
         if (result->fatal == TRUE) { 

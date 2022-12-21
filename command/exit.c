@@ -9,9 +9,9 @@
 #include <stdio.h>
 
 int exitArgumentHandler(command* command, int defaultValue) {
-    if (command->argNumber == 1) return defaultValue;
-    if (command->argNumber == 2 && !isdigit(*command->args[1])) {return -1;}
-    int exitCode = atoi(command->args[1]);
+    if (command->arguments->size == 1) return defaultValue;
+    if (command->arguments->size == 2 && !isdigit(*command->arguments->stringArr[1])) {return -1;}
+    int exitCode = atoi(command->arguments->stringArr[1]);
     return exitCode;
 }
 

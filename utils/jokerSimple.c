@@ -9,6 +9,7 @@
 #include <unistd.h>
 
 #include "jokerSimple.h"
+#include "StringArray.h"
 //#include "lineParser.h"
 
 
@@ -443,16 +444,13 @@ void afficherPathList(pathList* p){
 }
 
 
-char** pathListToArray(pathList* p){
-    char** ret = malloc(sizeof(char * )* p->len);
-    if(ret == NULL) perror("Erreur malloc @ pathListToArray : jokerSimple");
+stringArr* pathListToArray(pathList* p) {
+    stringArr* ret = createStringArray();
 
     int i = 0;
     listNode* tmp = p->first;
     while(i < p->len){
-        ret[i] = malloc(sizeof(char) * (strlen(tmp->content)+1));
-        if(ret[i] == NULL) perror("Erreur malloc @ pathListToArray string : jokerSimple");
-        strcpy(ret[i], tmp->content);
+        SA_add(ret, tmp->content);
 
         i++; tmp = tmp->next;
     }
@@ -463,14 +461,15 @@ char** pathListToArray(pathList* p){
 
 // Prend en argument un tableau de string représentant les arguments de la commande
 // Renvoie un tableau de string des arguments, dont les joker ont été interprêtés
-char** expansionJokers(char** args, int len, int* newLen) {
+stringArr* expansionJokers(stringArr* args) {
     pathList* listeDesArgs = creerPathList();
     int nbArgs = 0;
     int i = 0;
     
+    int len = args->size;
     while (i < len) {
         
-        char* argument = args[i];
+        char* argument = args->stringArr[i];
         if (containsSimpleJoker(argument)) {
             //printf("Test for args : %s\n", argument);
             pathList* tmp = jokerSimple(argument);
@@ -487,8 +486,7 @@ char** expansionJokers(char** args, int len, int* newLen) {
         }
         i++;
     }
-    *newLen = nbArgs;
-    char** ret = pathListToArray(listeDesArgs);
+    stringArr* ret = pathListToArray(listeDesArgs);
     freepathList(listeDesArgs);
     
     return ret;
