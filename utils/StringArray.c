@@ -36,9 +36,9 @@ int sizeOfFirstWord(const char* c) {
 /// @brief Create a new instance of stringArr struct.
 /// @return An instance of stringArr struct.
 stringArr* createStringArray() {
-    stringArr* newArray = malloc(sizeof(stringArr));
+    stringArr* newArray = Malloc(sizeof(stringArr), "SA creation failed.");
     newArray->size = 0;
-    newArray->stringArr = malloc(sizeof(char*)*0);
+    newArray->stringArr = Malloc(sizeof(char*)*0, "SA list creation failed.");
 
     return newArray;
 }
@@ -73,7 +73,7 @@ void SA_add(stringArr* array, char* string) {
     if (string == NULL) return;
     char** newArray = realloc(array->stringArr, sizeof(char*)*(array->size+1));
     
-    char* newString = malloc(sizeof(char)*strlen(string)+1);
+    char* newString = Malloc(sizeof(char)*strlen(string)+1, "Malloc failed when adding a word to SA.");
     strcpy(newString, string);
 
     newArray[array->size] = newString;
@@ -105,11 +105,11 @@ void SA_remove(stringArr* array, int amount) {
     if (amount > array->size) amount = array->size;
     
     int newSize = array->size - amount;
-    char** newArray = malloc(sizeof(char*)*(newSize));
+    char** newArray = Malloc(sizeof(char*)*(newSize), "Failed to malloc the newArray in SA_remove.");
 
     for (int i = 0; i < newSize; i++) {
         char* string = array->stringArr[i];
-        char* newString = malloc(sizeof(char)*strlen(string)+1);
+        char* newString = Malloc(sizeof(char)*strlen(string)+1, "Failed to malloc the word in SA_remove.");
         strcpy(newString, string);
 
         newArray[i] = newString;
@@ -152,7 +152,7 @@ stringArr* SA_splice(stringArr* toSplice, int begin, int amount) {
     int endIndex = begin+amount-1;
     int range = endIndex - begin;
     int newArrMaxSize = toSplice->size-range+1;
-    char** newArr = malloc(sizeof(char*) * (newArrMaxSize));
+    char** newArr = Malloc(sizeof(char*) * (newArrMaxSize), "Failed to malloc the newArray in SA_remove.");
 
     stringArr* deleted = createStringArray();
 
@@ -160,7 +160,7 @@ stringArr* SA_splice(stringArr* toSplice, int begin, int amount) {
     for (int i = 0; i < toSplice->size; i++) {
         if (i >= begin && i <= endIndex) { SA_add(deleted, toSplice->stringArr[i]);  continue; }
         char* string = toSplice->stringArr[i];
-        char* newString = malloc(sizeof(char)*strlen(string)+1);
+        char* newString = Malloc(sizeof(char)*strlen(string)+1, "Failed to malloc the word in SA_remove.");
         strcpy(newString, string);
 
         newArr[newArrayRealSize] = newString;
@@ -185,7 +185,7 @@ stringArr* SA_splice(stringArr* toSplice, int begin, int amount) {
 /// The amount of children generated.
 /// @return 
 stringArr** SA_split(stringArr* toSplit, char* separator, int* sizeBuff) {
-    stringArr** splitted = malloc(sizeof(stringArr*));
+    stringArr** splitted = Malloc(sizeof(stringArr*), "Failed to malloc the new SA in SA_split");
     *sizeBuff = 1;
     splitted[0] = createStringArray();
 
@@ -228,7 +228,7 @@ stringArr* SA_parseString(char* toParse) {
         if(*toParseTrimed == ' ') { toParseTrimed++; continue; }
 
         int wordSize = sizeOfFirstWord(toParseTrimed);
-        char* word = calloc(sizeof(char), (1 + wordSize));
+        char* word = Calloc(sizeof(char), (1 + wordSize), "Failed to malloc the word in while parsing.");
         strncat(word, toParseTrimed, wordSize);
         word[wordSize] = '\0';
         

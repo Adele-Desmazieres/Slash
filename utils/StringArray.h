@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "memory.h"
 
 #ifndef STRING_ARRAY_H
 #define STRING_ARRAY_H
