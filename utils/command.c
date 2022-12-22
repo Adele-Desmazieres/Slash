@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <unistd.h>
 #include <string.h>
 #include "StringArray.h"
 #include "command.h"
@@ -22,8 +23,23 @@ command* buildCommand(char* commandLine) {
     newCommand->arguments = SA_parseString(commandLine);
     newCommand->name = newCommand->arguments->stringArr[0];
     newCommand->targetRef = NULL;
-    newCommand->redirect.error = stderr;
-    newCommand->redirect.result = stderr;
+    newCommand->redirect.error = STDERR_FILENO;
+    newCommand->redirect.output = STDERR_FILENO;
+    newCommand->redirect.input = STDIN_FILENO;
+
+    return newCommand;
+}
+
+command* buildCommandParsed(stringArr* args) {
+    command* newCommand = Malloc(sizeof(command), "");
+    newCommand->logicalRef = TRUE;
+    newCommand->success = TRUE; //possiblement useless, on verra plus tard...
+    newCommand->arguments = args;
+    newCommand->name = args->stringArr[0];
+    newCommand->targetRef = NULL;
+    newCommand->redirect.error = STDERR_FILENO;
+    newCommand->redirect.output = STDERR_FILENO;
+    newCommand->redirect.input = STDIN_FILENO;
 
     return newCommand;
 }
@@ -34,12 +50,22 @@ void alterCommandArgs(command *c, stringArr* newArgs) {
     c->name = newArgs->stringArr[0];
 }
 
-void redirectErr(command *c, FILE* errorFile) {
-    c->redirect.error = errorFile;
+int redirectErr(command *c, int newErrorOutput) {
+    if (newErrorOutput < 0) { perror("FILE"); return FALSE; }
+    c->redirect.error = newErrorOutput;
+    return TRUE;
 }
 
-void redirectResult(command *c, FILE* errorFile) {
-    c->redirect.result = errorFile;
+int redirectOutput(command *c, int newOutput) {
+    if (newOutput < 0) { perror("FILE"); return FALSE; }
+    c->redirect.output = newOutput;
+    return TRUE;
+}
+
+int redirectInput(command *c, int newInput) {
+    if (newInput < 0) { perror("FILE"); return FALSE; }
+    c->redirect.input = newInput;
+    return TRUE;
 }
 
 void freeCommand (command* c){
