@@ -25,13 +25,10 @@ commands.o: ./command/cd.o ./command/exit.o ./command/pwd.o
 	$(CC) -c -fPIC ./command/pwd.c -o ./command/pwd.o
 
 # UTILS
-utils.o: ./utils/command.o ./utils/lineParser.o ./utils/memory.o ./utils/printing.o ./utils/stack.o ./utils/jokerSimple.o
+utils.o: ./utils/command.o ./utils/memory.o ./utils/printing.o ./utils/stack.o ./utils/jokerSimple.o ./utils/StringArray.o
 
 command.o: ./utils/command.c
 	$(CC) -c -fPIC ./utils/command.c -o ./utils/command.o
-
-lineParser.o: ./utils/lineParser.c
-	$(CC) -c -fPIC ./utils/lineParser.c -o ./utils/lineParser.o
 
 memory.o: ./utils/memory.c
 	$(CC) -c -fPIC ./utils/memory.c -o ./utils/memory.o
@@ -44,6 +41,9 @@ stack.o: ./utils/stack.c
 
 jokerSimple.o: ./utils/jokerSimple.c
 	$(CC) -c -fPIC ./utils/jokerSimple.c -o ./utils/jokerSimple.o
+
+StringArray.o: ./utils/StringArray.c
+	$(CC) -c -fPIC ./utils/StringArray.c -o ./utils/StringArray.o
 
 
 clean:

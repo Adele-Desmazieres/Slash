@@ -1,3 +1,6 @@
+#include <stdio.h>
+#include "StringArray.h"
+
 #ifndef COMMAND_H
 #define COMMAND_H 1
 
@@ -10,14 +13,19 @@
 #define MAX_ARGS_NUMBER 4096
 #define MAX_ARGS_STRLEN 4096
 
+typedef struct redirection {
+    FILE* error;
+    FILE* result;
+} redirection;
+
 typedef struct command{
     char* name;
-    char** args;
+    stringArr* arguments;
     int logicalRef;
     int success;
-    int argNumber;
     //targetRef servira pour la commande CD pour stocker le chemin de destination
     char* targetRef;
+    redirection redirect;
 } command;
 
 typedef struct commandResult{
@@ -29,8 +37,8 @@ typedef struct commandResult{
 
 void freeCommandResult(commandResult* cr);
 void freeCommand (command* c);
-command* buildCommand(char** command,  int argNumber);
-void alterCommandArgs(command *c, char** newArgs, int newArgNumber);
+command* buildCommand(char* commandLine);
+void alterCommandArgs(command *c, stringArr* newArgs);
 commandResult* buildCommandResult(int success, char* resultString);
 commandResult* buildFatalCommandResult(int success, char* errorMessage, int exitCode);
 

@@ -1,3 +1,5 @@
+#include "StringArray.h"
+
 #ifndef JOKER_SIMPLE_H
 #define JOKER_SIMPLE_H
 
@@ -18,8 +20,8 @@ void freepathList(pathList* arr);
 int isSuffix(const char* str, const char* suffix);
 char* getSuffix(const char* path);
 pathList* jokerSimple(char* orPath);
-char** pathListToArray(pathList* p);
-char** expansionJokers(char** args, int len, int* newLen);
+stringArr* pathListToArray(pathList* p);
+stringArr* expansionJokers(stringArr* args);
 
 
 #endif
