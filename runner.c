@@ -13,6 +13,13 @@
 
 #define PATH_MAX 4096
 
+void freePipeArray(int** tab, int size) {
+    for (int i = 0; i < size; i++) {
+        free(tab[i]);
+    }
+    free(tab);
+}
+
 int main(int argc, char *argv[]) {
     char* line;
     char* prompt;
@@ -82,11 +89,11 @@ int main(int argc, char *argv[]) {
             commandResult* result = commandProcessHandler(commande, returnValue);
 
             //SA_print(commande->arguments);
-            if (i == 0) {
+            if (i==0 && *commandAmount > 1) {
                 close(pipes[0][1]);
-            } else if (i == *commandAmount-1) {
+            } else if (i == *commandAmount-1 && *commandAmount > 1) {
                 close(pipes[*commandAmount-2][0]);
-            } else {
+            } else if (*commandAmount > 1) {
                 close(pipes[i-1][0]);
                 close(pipes[i][1]);
             }
@@ -106,6 +113,7 @@ int main(int argc, char *argv[]) {
             freeCommandResult(result);
         }
         
+        freePipeArray(pipes, *commandAmount-1);
         free(commandsArgs);
         free(commandAmount);
         free(line);
