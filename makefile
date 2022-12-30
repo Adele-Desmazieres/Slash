@@ -6,11 +6,14 @@ ALL= runner *.o ./command/*.o ./utils/*.o slash
 
 
 # RUNNER
-slash: utils.o commands.o runner.o
-	gcc ./utils/*.o ./command/*.o runner.o -o slash -lreadline -ltinfo -lm
+slash: utils.o commands.o runner.o process.o
+	gcc ./utils/*.o ./command/*.o process.o runner.o -o slash -lreadline -ltinfo -lm
 
 runner.o : runner.c
 	gcc -c ./runner.c -o ./runner.o
+
+process.o : process.c
+	gcc -c ./process.c -o ./process.o
 
 # COMMANDS
 commands.o: ./command/cd.o ./command/exit.o ./command/pwd.o

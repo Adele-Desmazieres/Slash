@@ -23,10 +23,11 @@ char* trim(char* toTrim) {
 
 /// @brief Get the size of the first word of a string. A word is delimited by a space character.
 /// @param c The string where we want to count the size of the first word.
+/// @param param The character delimiter that will separate the first word from the others.
 /// @return The size of the first word.
-int sizeOfFirstWord(const char* c) {
+int sizeOfFirstWord(const char* c, char delimiter) {
     int size = 0;
-    while(*c != '\0' && *c != ' '){
+    while(*c != '\0' && *c != delimiter){
         size++; c++;
     }
     return size;
@@ -218,6 +219,24 @@ int SA_indexOf(stringArr* base, char* toSearch) {
     return -1;
 }
 
+/// @brief Search element in the String-Array and return its index.
+/// @param base The String Array on which the function will iterate.
+/// @param toSearch The searched elements.
+/// @return The index of the first elements that equal toSearch if found, -1 else.
+int SA_indexOfArray(stringArr* base, stringArr* toSearch) {
+    int index = 0;
+    for (int i = 0; i < base->size; i++) {
+        if (base->stringArr[i] == NULL) continue;
+        for (int j = 0; j < toSearch->size; j++) {
+            if (toSearch->stringArr[j] == NULL) continue;
+            if (strcmp(base->stringArr[i], toSearch->stringArr[j]) == 0) return index;   
+        }
+        index++;
+    }
+
+    return -1;
+}
+
 /// @brief Transform a string into a String Array based on a space delimitor.
 /// @param toParse The string that will be parsed.
 /// @return A new String-Array that represents the string from which all the words are separated.
@@ -227,7 +246,7 @@ stringArr* SA_parseString(char* toParse) {
     while(*toParseTrimed != '\0'){
         if(*toParseTrimed == ' ') { toParseTrimed++; continue; }
 
-        int wordSize = sizeOfFirstWord(toParseTrimed);
+        int wordSize = sizeOfFirstWord(toParseTrimed, ' ');
         char* word = Calloc(sizeof(char), (1 + wordSize), "Failed to malloc the word in while parsing.");
         strncat(word, toParseTrimed, wordSize);
         word[wordSize] = '\0';
@@ -236,6 +255,57 @@ stringArr* SA_parseString(char* toParse) {
         SA_add(parsed, word);
         free(word);
         if(*toParseTrimed == '\0') return parsed;
+    }
+
+    return parsed;
+}
+
+/// @brief Transform a string into a String Array based on a space delimitor. However, this function will
+/// consider as one word the parts of the string surrounded by (double) quote marks. 
+/// @param toParse The string that will be parsed.
+/// @return A new String-Array that represents the string from which all the words are separated.
+stringArr* SA_parseStringWithQuotes(char* toParse) {
+    char* toParseTrimed = trim(toParse);
+    stringArr* parsed = createStringArray();
+
+    int wasQuote = FALSE;
+    while(*toParseTrimed != '\0'){
+        int wordSize = 0;
+        switch (*toParseTrimed) {
+            case '"' : wordSize = sizeOfFirstWord(++toParseTrimed, '"'); wasQuote = TRUE; break;
+            case '\'': wordSize = sizeOfFirstWord(++toParseTrimed, '\''); wasQuote = TRUE; break;
+            case ' ' : toParseTrimed++; continue;
+            default  : wordSize = sizeOfFirstWord(toParseTrimed, ' '); break;
+        }
+        //printf("-%d-\n", wordSize);
+        char* word = calloc(sizeof(char), (1 + wordSize));
+        strncat(word, toParseTrimed, wordSize);
+        word[wordSize] = '\0';
+        
+        toParseTrimed += wordSize;
+        SA_add(parsed, word);
+        free(word);
+        if (wasQuote == TRUE) {toParseTrimed++; wasQuote = FALSE;}
+        if (*toParseTrimed == '\0') return parsed;
+    }
+
+    return parsed;
+}
+
+/// @brief Transform a string into a String Array based on a space delimitor. The initial \b char**
+/// is NOT affected.
+/// @param toParse The string array that will be parsed.
+/// @return A new String-Array that represents the string array.
+stringArr* SA_parseArray(char** toParse, int size) {
+    stringArr* parsed = createStringArray();
+
+    for (int i = 0; i < size; i++) {
+        if(toParse[i] == NULL) continue;
+        char* string = malloc(sizeof(char)*strlen(toParse[i])+1);
+        strcpy(string, toParse[i]);
+        string = trim(string);
+        SA_add(parsed, string);
+        free(string);
     }
 
     return parsed;

@@ -34,7 +34,7 @@ void pwdArgumentHandler(command* command) {
     }
     
     printError("Invalid argument for the command pwd. Expected argument : -L or -P.\n");
-    command->success = ERROR;
+    command->success = FALSE;
 }
 
 commandResult* pwdCommandRunner(command* command) {
