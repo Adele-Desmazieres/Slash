@@ -24,7 +24,7 @@ command* buildCommand(char* commandLine) {
     newCommand->name = newCommand->arguments->stringArr[0];
     newCommand->targetRef = NULL;
     newCommand->redirect.error = STDERR_FILENO;
-    newCommand->redirect.output = STDERR_FILENO;
+    newCommand->redirect.output = STDOUT_FILENO;
     newCommand->redirect.input = STDIN_FILENO;
 
     return newCommand;
@@ -38,7 +38,7 @@ command* buildCommandParsed(stringArr* args) {
     newCommand->name = args->stringArr[0];
     newCommand->targetRef = NULL;
     newCommand->redirect.error = STDERR_FILENO;
-    newCommand->redirect.output = STDERR_FILENO;
+    newCommand->redirect.output = STDOUT_FILENO;
     newCommand->redirect.input = STDIN_FILENO;
 
     return newCommand;

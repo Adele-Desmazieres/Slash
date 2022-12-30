@@ -44,20 +44,19 @@ int main(int argc, char *argv[]) {
         //printf("displayed : %s\n", line);        
         
         int* commandAmount = malloc(sizeof(int));
+        if (commandAmount == NULL) perror("error malloc");
+        
         stringArr* parsed = SA_parseStringWithQuotes(line);
         stringArr** commandsArgs = SA_split(parsed, "|", commandAmount);
         SA_free(parsed);
         
         command** tableauCommand = malloc(sizeof(command) * (*commandAmount));
+        if (tableauCommand == NULL) perror("error malloc");
+        
         int **pipes = malloc(sizeof(int*) * (*commandAmount-1));
         if (pipes == NULL) perror("error malloc");
         
-        // transformer le tableau de string en tableau de commandes
-        // et malloc les pipes
-        //tableauCommand[0] = buildCommandParsed(commandsArgs[0]);
-        //pipes[0] = malloc(sizeof(int) * 2);
-        //if (pipes[0] == NULL) perror("error malloc");
-        
+        // transformer le tableau de string en tableau de commandes et malloc les pipes
         for (int i = 0; i < *commandAmount; i++) {
             tableauCommand[i] = buildCommandParsed(commandsArgs[i]);
             if (i != *commandAmount - 1) {
@@ -73,14 +72,6 @@ int main(int argc, char *argv[]) {
             redirectOutput(tableauCommand[i], pipes[i][1]);
         }
         
-        //printf("%d\n", tableauCommand[0]->redirect.output);
-        //printf("%d\n", tableauCommand[1]->redirect.input);
-        //printf("[%d, %d]\n", pipes[0][0], pipes[0][1]);
-        //printf("INPUT1 : %d\n", tableauCommand[0]->redirect.input);
-        //printf("OUTPUT1 : %d\n", tableauCommand[0]->redirect.output);
-        //printf("INPUT2 : %d\n", tableauCommand[1]->redirect.input);
-        //printf("OUTPUT2 : %d\n", tableauCommand[1]->redirect.output);
-        
         for (int i = 0; i < *commandAmount; i++) {       
             command *commande = tableauCommand[i];
             if (commande->arguments->size == 0) continue;
@@ -89,18 +80,11 @@ int main(int argc, char *argv[]) {
             commandResult* result = commandProcessHandler(commande, returnValue);
 
             //SA_print(commande->arguments);
-            if (i==0 && *commandAmount > 1) {
-                close(pipes[0][1]);
-            } else if (i == *commandAmount-1 && *commandAmount > 1) {
-                close(pipes[*commandAmount-2][0]);
-            } else if (*commandAmount > 1) {
-                close(pipes[i-1][0]);
-                close(pipes[i][1]);
-            }
             
-            freeCommand(commande);
-
             if (result->fatal == TRUE) { 
+                freeCommand(commande);
+                freePipeArray(pipes, *commandAmount-1);
+                free(tableauCommand);
                 free(commandsArgs);
                 free(commandAmount);
                 int exitCode = result->exitCode;
@@ -109,6 +93,16 @@ int main(int argc, char *argv[]) {
                 return exitCode;
             }
             readResult(commande, result);
+            if (i==0 && *commandAmount > 1) {
+                close(pipes[0][1]);
+            } else if (i == *commandAmount-1 && *commandAmount > 1) {
+                close(pipes[*commandAmount-2][0]);
+            } else if (*commandAmount > 1) {
+                close(pipes[i-1][0]);
+                close(pipes[i][1]);
+            }
+
+            freeCommand(commande);
             returnValue = result->success;
             freeCommandResult(result);
         }
@@ -116,6 +110,7 @@ int main(int argc, char *argv[]) {
         freePipeArray(pipes, *commandAmount-1);
         free(commandsArgs);
         free(commandAmount);
+        free(tableauCommand);
         free(line);
     }
 

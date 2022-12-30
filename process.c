@@ -19,7 +19,8 @@ void readResult(command* command, commandResult* commandResult) {
         return;
     }
     if (commandResult->resultMessage) {
-        printf("%s\n", commandResult->resultMessage);
+        //printf("TRUC %d\n", command->redirect.output);
+        dprintf(command->redirect.output, "%s\n", commandResult->resultMessage);
     }
 }
 
@@ -28,12 +29,12 @@ void fileAttribution(command* command, int mode, char* fileName) {
     //printf("MODE : -%d-", mode);
     switch (mode) {
         case REDIRECT_INPUT : success = redirectInput(command, open(fileName, O_RDONLY)); break;
-        case REDIRECT_OUTPUT : success = redirectOutput(command, open(fileName, O_WRONLY | O_CREAT | O_EXCL, 0644)); break;
-        case REDIRECT_OUTPUT_TRUNC : success = redirectOutput(command, open(fileName, O_WRONLY | O_CREAT | O_TRUNC, 0644)); break;
-        case REDIRECT_OUTPUT_CONCAT : success = redirectOutput(command, open(fileName, O_WRONLY | O_CREAT | O_APPEND, 0644)); break;
-        case REDIRECT_ERROR : success = redirectErr(command, open(fileName, O_WRONLY | O_CREAT | O_EXCL, 0644)); break;
-        case REDIRECT_ERROR_TRUNC : success = redirectErr(command, open(fileName, O_WRONLY | O_CREAT | O_TRUNC, 0644)); break;
-        case REDIRECT_ERROR_CONCAT : success = redirectErr(command, open(fileName, O_WRONLY | O_CREAT | O_APPEND, 0644)); break;
+        case REDIRECT_OUTPUT : success = redirectOutput(command, open(fileName, O_WRONLY | O_CREAT | O_EXCL, 0664)); break;
+        case REDIRECT_OUTPUT_TRUNC : success = redirectOutput(command, open(fileName, O_WRONLY | O_CREAT | O_TRUNC, 0664)); break;
+        case REDIRECT_OUTPUT_CONCAT : success = redirectOutput(command, open(fileName, O_WRONLY | O_CREAT | O_APPEND, 0664)); break;
+        case REDIRECT_ERROR : success = redirectErr(command, open(fileName, O_WRONLY | O_CREAT | O_EXCL, 0664)); break;
+        case REDIRECT_ERROR_TRUNC : success = redirectErr(command, open(fileName, O_WRONLY | O_CREAT | O_TRUNC, 0664)); break;
+        case REDIRECT_ERROR_CONCAT : success = redirectErr(command, open(fileName, O_WRONLY | O_CREAT | O_APPEND, 0664)); break;
         default: break;
     }
 
@@ -44,25 +45,29 @@ int destParser(command* command) {
     char* toSearch[7] = {"<", ">", ">|", ">>", "2>", "2>|", "2>>"};
     stringArr* redirectChar = SA_parseArray(toSearch, 7);
     int index = SA_indexOfArray(command->arguments, redirectChar);
-    SA_free(redirectChar);
-    if (index == -1) return TRUE;
-    stringArr* redirection = SA_splice(command->arguments, index, 2);
-    command->name = command->arguments->stringArr[0];
-    if (redirection->size < 2) { SA_free(redirection); return FALSE; }
 
-    char* fileName = redirection->stringArr[1];
-    char* redirectSymbol = redirection->stringArr[0];
+    while (index != -1) {
+        stringArr* redirection = SA_splice(command->arguments, index, 2);
+        command->name = command->arguments->stringArr[0];
+        if (redirection->size < 2) { SA_free(redirection); return FALSE; }
 
-    if (strcmp(redirectSymbol, "<") == 0) { fileAttribution(command, REDIRECT_INPUT, fileName); }
-    else if (strcmp(redirectSymbol, ">") == 0) { fileAttribution(command, REDIRECT_OUTPUT, fileName); }
-    else if (strcmp(redirectSymbol, ">|") == 0) { fileAttribution(command, REDIRECT_OUTPUT_TRUNC, fileName); }
-    else if (strcmp(redirectSymbol, ">>") == 0) { fileAttribution(command, REDIRECT_OUTPUT_CONCAT, fileName); }
-    else if (strcmp(redirectSymbol, "2>") == 0) { fileAttribution(command, REDIRECT_ERROR, fileName); }
-    else if (strcmp(redirectSymbol, "2>|") == 0) { fileAttribution(command, REDIRECT_ERROR_TRUNC, fileName); }
-    else if (strcmp(redirectSymbol, "2>>") == 0) { fileAttribution(command, REDIRECT_ERROR_CONCAT, fileName); }
+        char* fileName = redirection->stringArr[1];
+        char* redirectSymbol = redirection->stringArr[0];
+
+        if (strcmp(redirectSymbol, "<") == 0) { fileAttribution(command, REDIRECT_INPUT, fileName); }
+        else if (strcmp(redirectSymbol, ">") == 0) { fileAttribution(command, REDIRECT_OUTPUT, fileName); }
+        else if (strcmp(redirectSymbol, ">|") == 0) { fileAttribution(command, REDIRECT_OUTPUT_TRUNC, fileName); }
+        else if (strcmp(redirectSymbol, ">>") == 0) { fileAttribution(command, REDIRECT_OUTPUT_CONCAT, fileName); }
+        else if (strcmp(redirectSymbol, "2>") == 0) { fileAttribution(command, REDIRECT_ERROR, fileName); }
+        else if (strcmp(redirectSymbol, "2>|") == 0) { fileAttribution(command, REDIRECT_ERROR_TRUNC, fileName); }
+        else if (strcmp(redirectSymbol, "2>>") == 0) { fileAttribution(command, REDIRECT_ERROR_CONCAT, fileName); }
+        
+        SA_free(redirection);
+        if (command->success == FALSE) return FALSE;
+        index = SA_indexOfArray(command->arguments, redirectChar);
+    }
     
-    SA_free(redirection);
-    if (command->success == FALSE) return FALSE;
+    SA_free(redirectChar);
     return TRUE;
 }
 
@@ -96,7 +101,7 @@ commandResult* commandProcessHandler(command* command, int lastCommandState) {
     stringArr* expanded = expansionJokers(command->arguments);
     alterCommandArgs(command, expanded);
     //Redirections
-    if (destParser(command) == FALSE) return buildCommandResult(ERROR, "Redirection Failed.\n");
+    if (destParser(command) == FALSE) return buildCommandResult(ERROR, "" /*"Redirection Failed.\n"*/);
     //Comande interne
     if ( strcmp(command->name, "exit") == 0 ) return exitCommandRunner(command, lastCommandState);
     if ( strcmp(command->name, "cd") == 0 ) return cdCommandRunner(command);
