@@ -223,7 +223,7 @@ char* mergeFilePathAndName(const char* path, char* filename, int isDir) {
     return filePath;
 }
 
-void parcourirRepertoire (pathList* p, int depth, int maxDepth, const char* currPath, char** pathArray, int start, int doubles){
+void parcourirRepertoire (pathList* p, int depth, int maxDepth, const char* currPath, char** pathArray){
     if(depth == maxDepth) return;
     //printf("PP : %s\n", currPath);
     struct dirent* de;
@@ -249,7 +249,7 @@ void parcourirRepertoire (pathList* p, int depth, int maxDepth, const char* curr
     //Si on rencontre .. on remonte dans l'arborescence;
     if(strcmp(suffixe, "./") == 0) {
         char* merged = mergeFilePathAndName(currPath, ".", 1);
-        parcourirRepertoire(p, depth+1, maxDepth, merged, pathArray, 0, 0);
+        parcourirRepertoire(p, depth+1, maxDepth, merged, pathArray);
         free(merged);
         free(currPathCpy);
         free(suffixe);
@@ -257,7 +257,7 @@ void parcourirRepertoire (pathList* p, int depth, int maxDepth, const char* curr
     }
     if(strcmp(suffixe, "../") == 0) {
         char* merged = mergeFilePathAndName(currPath, "..", 1);
-        parcourirRepertoire(p, depth+1, maxDepth, merged, pathArray, 0, 0);
+        parcourirRepertoire(p, depth+1, maxDepth, merged, pathArray);
         free(merged);
         free(currPathCpy);
         free(suffixe);
@@ -320,7 +320,7 @@ void parcourirRepertoire (pathList* p, int depth, int maxDepth, const char* curr
                 if (currPathCpy2[tmpLen] == '/') currPathCpy2[tmpLen] = '\0';
                 ajouterPath(p,currPathCpy2);
             }else {
-                parcourirRepertoire(p, depth+1, maxDepth, currPathCpy2, pathArray, 0, 0);
+                parcourirRepertoire(p, depth+1, maxDepth, currPathCpy2, pathArray);
             }
             free(currPathCpy2);
         }
@@ -333,50 +333,74 @@ void parcourirRepertoire (pathList* p, int depth, int maxDepth, const char* curr
 }
 
 
-void parcoursDouble(pathList* p, int depth, int maxDepth, const char* currPath, char** pathArray, int start){
+void parcoursDouble(pathList* p, int maxDepth, const char* currPath, char** pathArray, int start){
 
     struct dirent* de;
     DIR* dir;
     struct stat st;
 
+
     char* currPathCpy = malloc((strlen(currPath)+1) * sizeof(char));
     if(currPathCpy == NULL) perror("erreur malloc");
     strcpy(currPathCpy, currPath);
-    //printf("nom du chemin courant : %s\n", currPathCpy);
-    int allRepertoire = 0;
 
-    //Trouver suffixe du répertoire courant s'il existe, ouvrir le bon repertoire sinon
-    char* suffixe = getSuffix(pathArray[0]);
-    if (strcmp("*", suffixe) == 0) allRepertoire = 1;
-    //printf("nom du suffixe courant : %s\n", suffixe);
+    //printf("nom du chemin courant : %s\n", currPathCpy);
 
     //On parcourt le répertoire courant
-    if ((dir = opendir(currPathCpy)) == NULL){
-            //printf("itération sur %s échouée\n", currPathCpy);
-            free(suffixe);
+    if(start == 1){
+        if( (dir = opendir("./")) == NULL){
             free(currPathCpy);
             return;
-    }
-    while ((de = readdir(dir)) != NULL ){
+        }
+        while ((de = readdir(dir)) != NULL ){
             //On passe . et ..
             if( de->d_name[0] == '.') continue;
             //On récupère les infos du fichier courant
-            if( (stat(currPathCpy, &st) < 0)) perror(" erreur stat() : jokerSimple");
+            if( (stat("./", &st) < 0)) perror(" erreur stat() : jokerSimple");
+           
             if(S_ISDIR(st.st_mode) && !(S_ISLNK(st.st_mode)) ){
                 char* currPathCpy2 = malloc((strlen(currPath)+2+strlen(de->d_name)+1) * sizeof(char));
                 if(currPathCpy2 == NULL) perror("erreur malloc");
                 strcpy(currPathCpy2, currPathCpy);
-                if(start == 0) strcat(currPathCpy2, "/");
                 strcat(currPathCpy2, de->d_name);
-                parcourirRepertoire(p, 0, maxDepth, currPathCpy2, pathArray, 1, 1);
-                parcoursDouble(p, 0, maxDepth, currPathCpy2, pathArray, 0);
+                strcat(currPathCpy2, "/");
+                //printf("Nom du chemin recherché : %s \n", currPathCpy2);
+                parcourirRepertoire(p, 0, maxDepth, currPathCpy2, pathArray);
+                parcoursDouble(p, maxDepth, currPathCpy2, pathArray, 0);
                 free(currPathCpy2);
             }
     }
     closedir(dir);        
 
+    } else {
+        if ((dir = opendir(currPathCpy)) == NULL){
+                //printf("itération sur %s échouée\n", currPathCpy);
+                free(currPathCpy);
+                return;
+        }
+        while ((de = readdir(dir)) != NULL ){
+            //On passe . et ..
+            if( de->d_name[0] == '.') continue;
+            //On récupère les infos du fichier courant
+            if( (stat(currPathCpy, &st) < 0)) perror(" erreur stat() : jokerSimple");
+            
+            if(S_ISDIR(st.st_mode) && !(S_ISLNK(st.st_mode)) ){
+                char* currPathCpy2 = malloc((strlen(currPath)+2+strlen(de->d_name)+1) * sizeof(char));
+                if(currPathCpy2 == NULL) perror("erreur malloc");
+                strcpy(currPathCpy2, currPathCpy);
+                strcat(currPathCpy2, de->d_name);
+                strcat(currPathCpy2, "/");
+                //printf("Nom du chemin recherché : %s \n", currPathCpy2);
+                parcourirRepertoire(p, 0, maxDepth, currPathCpy2, pathArray);
+                parcoursDouble(p, maxDepth, currPathCpy2, pathArray, 0);
+                free(currPathCpy2);
+            }
+    }
+    closedir(dir);      
+    }
+      
+
     //Libération de la mémoire
-    free(suffixe);
     free(currPathCpy);
 }
 
@@ -397,7 +421,7 @@ pathList* jokerSimple(char* orPath){
 
     //Detection du joker double et avancée
     if(strlen(orPathCpy) >= 3 && orPath[0] == '*' && orPath[1] == '*' && orPath[2] == '/'){
-        orPathCpy += 3; doubleJoker = 1;
+        memmove(orPathCpy, orPathCpy+3, strlen(orPathCpy) - 2); doubleJoker = 1;
     }
     //Comptage des arguments pour le tableau
     int maxDepth = countArgsJoker(orPathCpy);
@@ -419,14 +443,14 @@ pathList* jokerSimple(char* orPath){
     //printParsedJoker(args, maxDepth);
     //Appel initial sur le répertoire au début du chemin
     if(doubleJoker == 0) {
-        parcourirRepertoire(ret, 0, maxDepth, pathCpy, args, 1, 0);
+        parcourirRepertoire(ret, 0, maxDepth, pathCpy, args);
     }else {
-        parcourirRepertoire(ret, 0, maxDepth, pathCpy, args, 1, 0);
-        parcoursDouble(ret, 0, maxDepth, pathCpy, args, 1);
+        parcourirRepertoire(ret, 0, maxDepth, pathCpy, args);
+        parcoursDouble(ret, maxDepth, pathCpy, args, 1);
     }
     //printParsedJoker(args, maxDepth);
     freeParsedLineJoker(args, maxDepth);
-    if(doubleJoker) orPathCpy -= 3;
+    //if(doubleJoker) orPathCpy -= 3;
     free(orPathCpy);
 
     return ret;
