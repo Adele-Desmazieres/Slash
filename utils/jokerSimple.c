@@ -6,7 +6,9 @@
 #include <ctype.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <unistd.h>
+#include <unistd.h>       
+#include <fcntl.h>
+#include <errno.h>
 
 #include "jokerSimple.h"
 #include "StringArray.h"
@@ -356,9 +358,9 @@ void parcoursDouble(pathList* p, int maxDepth, const char* currPath, char** path
             //On passe . et ..
             if( de->d_name[0] == '.') continue;
             //On récupère les infos du fichier courant
-            if( (stat("./", &st) < 0)) perror(" erreur stat() : jokerSimple");
+            if( (lstat("./", &st) < 0)) perror(" erreur stat() : jokerSimple");
            
-            if(S_ISDIR(st.st_mode) && !(S_ISLNK(st.st_mode)) ){
+            if(S_ISDIR(st.st_mode) ){
                 char* currPathCpy2 = malloc((strlen(currPath)+2+strlen(de->d_name)+1) * sizeof(char));
                 if(currPathCpy2 == NULL) perror("erreur malloc");
                 strcpy(currPathCpy2, currPathCpy);
@@ -366,7 +368,10 @@ void parcoursDouble(pathList* p, int maxDepth, const char* currPath, char** path
                 strcat(currPathCpy2, "/");
                 //printf("Nom du chemin recherché : %s \n", currPathCpy2);
                 parcourirRepertoire(p, 0, maxDepth, currPathCpy2, pathArray);
-                parcoursDouble(p, maxDepth, currPathCpy2, pathArray, 0);
+                int fd;
+                if (((fd = open(currPathCpy2, O_NOFOLLOW) < 0) && errno == ELOOP)){
+                }
+                else if (!(S_ISLNK(st.st_mode))) {  parcoursDouble(p, maxDepth, currPathCpy2, pathArray, 0); }
                 free(currPathCpy2);
             }
     }
@@ -382,9 +387,9 @@ void parcoursDouble(pathList* p, int maxDepth, const char* currPath, char** path
             //On passe . et ..
             if( de->d_name[0] == '.') continue;
             //On récupère les infos du fichier courant
-            if( (stat(currPathCpy, &st) < 0)) perror(" erreur stat() : jokerSimple");
+            if( (lstat(currPathCpy, &st) < 0)) perror(" erreur stat() : jokerSimple");
             
-            if(S_ISDIR(st.st_mode) && !(S_ISLNK(st.st_mode)) ){
+            if(S_ISDIR(st.st_mode)){
                 char* currPathCpy2 = malloc((strlen(currPath)+2+strlen(de->d_name)+1) * sizeof(char));
                 if(currPathCpy2 == NULL) perror("erreur malloc");
                 strcpy(currPathCpy2, currPathCpy);
@@ -392,7 +397,11 @@ void parcoursDouble(pathList* p, int maxDepth, const char* currPath, char** path
                 strcat(currPathCpy2, "/");
                 //printf("Nom du chemin recherché : %s \n", currPathCpy2);
                 parcourirRepertoire(p, 0, maxDepth, currPathCpy2, pathArray);
-                parcoursDouble(p, maxDepth, currPathCpy2, pathArray, 0);
+                int fd;
+                if ((fd = open(currPathCpy2, O_NOFOLLOW) < 0)){
+                    if (errno == ELOOP) printf("Youpi \n");
+                }
+                else if (!(S_ISLNK(st.st_mode))) {  parcoursDouble(p, maxDepth, currPathCpy2, pathArray, 0); }
                 free(currPathCpy2);
             }
     }
@@ -406,6 +415,9 @@ void parcoursDouble(pathList* p, int maxDepth, const char* currPath, char** path
 
 
 pathList* jokerSimple(char* orPath){
+
+    if (strcmp(orPath, "**") == 0) return jokerSimple("**/*");
+    if (strcmp(orPath, "**/") == 0) return jokerSimple("**/*/");
 
     char* orPathCpy = malloc(sizeof(char) * (strlen(orPath)+1));
     if (orPathCpy == NULL) perror("Malloc orPathCpy @ jokerSimple");
