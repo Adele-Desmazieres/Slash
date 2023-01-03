@@ -319,7 +319,7 @@ void parcourirRepertoire (pathList* p, int depth, int maxDepth, const char* curr
             if(depth == maxDepth-1) {
                 //On ajoute ce nom à la liste
                 int tmpLen = strlen(currPathCpy2)-1;
-                if (currPathCpy2[tmpLen] == '/') currPathCpy2[tmpLen] = '\0';
+                if (!searchDir && currPathCpy2[tmpLen] == '/') currPathCpy2[tmpLen] = '\0';
                 ajouterPath(p,currPathCpy2);
             }else {
                 parcourirRepertoire(p, depth+1, maxDepth, currPathCpy2, pathArray);
@@ -369,9 +369,10 @@ void parcoursDouble(pathList* p, int maxDepth, const char* currPath, char** path
                 //printf("Nom du chemin recherché : %s \n", currPathCpy2);
                 parcourirRepertoire(p, 0, maxDepth, currPathCpy2, pathArray);
                 int fd;
-                if (((fd = open(currPathCpy2, O_NOFOLLOW) < 0) && errno == ELOOP)){
-                }
-                else if (!(S_ISLNK(st.st_mode))) {  parcoursDouble(p, maxDepth, currPathCpy2, pathArray, 0); }
+                if ((fd = open(currPathCpy2, O_NOFOLLOW) < 0)){
+                    if (errno == ELOOP) printf("Youpi \n");
+                    else parcoursDouble(p, maxDepth, currPathCpy2, pathArray, 0);
+                } else if(de->d_type != DT_LNK) parcoursDouble(p, maxDepth, currPathCpy2, pathArray, 0);
                 free(currPathCpy2);
             }
     }
@@ -399,11 +400,11 @@ void parcoursDouble(pathList* p, int maxDepth, const char* currPath, char** path
                 parcourirRepertoire(p, 0, maxDepth, currPathCpy2, pathArray);
                 int fd;
                 if ((fd = open(currPathCpy2, O_NOFOLLOW) < 0)){
-                    if (errno == ELOOP) printf("Youpi \n");
-                }
-                else if (!(S_ISLNK(st.st_mode))) {  parcoursDouble(p, maxDepth, currPathCpy2, pathArray, 0); }
+                    if (errno == ELOOP) {}
+                    else parcoursDouble(p, maxDepth, currPathCpy2, pathArray, 0);
+                } else if(de->d_type != DT_LNK) parcoursDouble(p, maxDepth, currPathCpy2, pathArray, 0);
                 free(currPathCpy2);
-            }
+            } 
     }
     closedir(dir);      
     }
