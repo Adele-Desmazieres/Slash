@@ -35,7 +35,7 @@ command* buildCommandParsed(stringArr* args) {
     newCommand->logicalRef = TRUE;
     newCommand->success = TRUE; //possiblement useless, on verra plus tard...
     newCommand->arguments = args;
-    newCommand->name = args->stringArr[0];
+    newCommand->name = (args->size == 0) ? NULL : args->stringArr[0];
     newCommand->targetRef = NULL;
     newCommand->redirect.error = STDERR_FILENO;
     newCommand->redirect.output = STDOUT_FILENO;
@@ -93,6 +93,7 @@ commandResult* buildCommandResult(int success, char* resultString) {
     newCommandResult->fatal = FALSE;
     newCommandResult->success = success;
     newCommandResult->resultMessage = NULL;
+    newCommandResult->statusExited = FALSE;
     if(resultString) {
         newCommandResult->resultMessage = Malloc(((strlen(resultString) + 1) * sizeof(char)), "");
         strcpy(newCommandResult->resultMessage, resultString);
@@ -119,6 +120,7 @@ commandResult* buildFatalCommandResult(int success, char* errorMessage, int exit
     newCommandResult->exitCode = exitCode;
     newCommandResult->fatal = TRUE;
     newCommandResult->success = success;
+    newCommandResult->statusExited = FALSE;
 
     newCommandResult->resultMessage = Malloc(((strlen(errorMessage) + 1) * sizeof(char)), "");
     strcpy(newCommandResult->resultMessage, errorMessage);

@@ -49,7 +49,7 @@ int destParser(command* command) {
     while (index != -1) {
         stringArr* redirection = SA_splice(command->arguments, index, 2);
         command->name = command->arguments->stringArr[0];
-        if (redirection->size < 2) { SA_free(redirection); return FALSE; }
+        if (redirection->size < 2) { SA_free(redirection); SA_free(redirectChar); return FALSE; }
 
         char* fileName = redirection->stringArr[1];
         char* redirectSymbol = redirection->stringArr[0];
@@ -71,13 +71,15 @@ int destParser(command* command) {
     return TRUE;
 }
 
-commandResult* startChildCommandProcess(command* command) {
+commandResult* startChildCommandProcess(command* command, initialSIGBehavior initial) {
     pid_t r;
     int result;
 
     switch(r = fork()) {
         case -1: break;
-        case 0: 
+        case 0:
+            sigaction(SIGINT, &initial.sig_int, NULL);
+            sigaction(SIGTERM, &initial.sig_term, NULL);
             dup2(command->redirect.input, STDIN_FILENO);
             dup2(command->redirect.output, STDOUT_FILENO);
             dup2(command->redirect.error, STDERR_FILENO);
@@ -86,29 +88,83 @@ commandResult* startChildCommandProcess(command* command) {
             execvp(command->name, command->arguments->stringArr);
             exit(127);
         default: 
-                waitpid(r, &result, 0);
-                int resultStatus = WEXITSTATUS(result);
-                int tempReturnValue = (resultStatus == 2 || resultStatus == 15) ? 255 : resultStatus;
-                return buildCommandResult(tempReturnValue, NULL);
+            waitpid(r, &result, 0);
+            int resultStatus = WEXITSTATUS(result);
+            int tempReturnValue = (resultStatus == 2 || resultStatus == 15) ? 255 : resultStatus;
+            commandResult* cResult = buildCommandResult(tempReturnValue, NULL);
+            if(WIFSIGNALED(result)) {cResult->statusExited = TRUE;}
+            return cResult;
     }
 
     //Commande Inconnue.
     return buildCommandResult(FALSE, "Command unknown.\n");
 }
 
-commandResult* commandProcessHandler(command* command, int lastCommandState) {   
+
+int commandsInterpreter(command* command) {
     // expansion des jokers pour les commandes externes
     stringArr* expanded = expansionJokers(command->arguments);
     alterCommandArgs(command, expanded);
     //Redirections
-    if (destParser(command) == FALSE) return buildCommandResult(ERROR, "" /*"Redirection Failed.\n"*/);
+    if (destParser(command) == FALSE) return FALSE; /*"Redirection Failed.\n"*/
+}
+
+int commandRedirection(command** commands, int amount, int** pipes) {
+    for (int i = 0; i < amount; i++) {
+        if (i != amount-1) {
+            redirectInput(commands[i+1], pipes[i][0]);
+            redirectOutput(commands[i], pipes[i][1]);
+        }
+        int redirectDone = commandsInterpreter(commands[i]);
+        if (redirectDone == FALSE) return FALSE;
+    }
+    return TRUE;
+}
+
+commandResult* commandProcessHandler(command* command, int lastCommandState, initialSIGBehavior initial) {   
     //Comande interne
     if ( strcmp(command->name, "exit") == 0 ) return exitCommandRunner(command, lastCommandState);
     if ( strcmp(command->name, "cd") == 0 ) return cdCommandRunner(command);
     if ( strcmp(command->name, "pwd") == 0 ) return pwdCommandRunner(command);
     
     //Commande externe
-    return startChildCommandProcess(command);
+    return startChildCommandProcess(command, initial);
 }
 
 
+
+
+
+/* *** EXTRA *** */
+char checkIfQuotesAreClosed(char* line) {
+    char quoteType = (char) 0;
+
+    while(*line != '\0') {
+        if (*line == '"') {
+            if (quoteType == '"') quoteType = (char) 0; else quoteType = '"';
+        }
+        if (*line == '\'') {
+            if (quoteType == '\'') quoteType = (char) 0; else quoteType = '\'';
+        }
+        *line++;
+    }
+
+    return quoteType;
+}
+
+char* completeLine(char* line, char delimiter) {
+    char* toAdd;
+    char* final = line;
+    toAdd = readline("> ");
+    while (strchr(toAdd, delimiter) == NULL) {
+        final = realloc(final, sizeof(char)*(strlen(final) + strlen(toAdd) + 1));
+        strcat(final, toAdd);
+        free(toAdd);
+        toAdd = readline("> ");
+    }
+    final = realloc(final, sizeof(char)*(strlen(final) + strlen(toAdd) + 1));
+    strcat(final, toAdd);
+    free(toAdd);
+
+    return final;
+}

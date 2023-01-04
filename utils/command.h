@@ -33,6 +33,7 @@ typedef struct commandResult{
     int fatal;
     int success;
     int exitCode;
+    int statusExited;
     char* resultMessage;
 } commandResult;
 
