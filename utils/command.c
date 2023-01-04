@@ -35,7 +35,7 @@ command* buildCommandParsed(stringArr* args) {
     newCommand->logicalRef = TRUE;
     newCommand->success = TRUE; //possiblement useless, on verra plus tard...
     newCommand->arguments = args;
-    newCommand->name = args->stringArr[0];
+    newCommand->name = (args->size == 0) ? NULL : args->stringArr[0];
     newCommand->targetRef = NULL;
     newCommand->redirect.error = STDERR_FILENO;
     newCommand->redirect.output = STDOUT_FILENO;

@@ -13,20 +13,55 @@
 
 #define PATH_MAX 4096
 
-void freePipeArray(int** tab, int size) {
-    for (int i = 0; i < size; i++) {
-        free(tab[i]);
+void freeSA_array(stringArr** commands, int amount) {
+    for (int i = 0; i < amount; i++) {
+        if (commands[i] != NULL) SA_free(commands[i]);
     }
+    free(commands);
+}
+
+void freeCommandArrays(command** commands, int amount) {
+    for (int i = 0; i < amount; i++) {
+        if (commands[i] != NULL) freeCommand(commands[i]);
+    }
+    free(commands);
+}
+
+int checkIfEmptyCommand(stringArr** commands, int amount) {
+    for (int i = 0; i < amount; i++) {
+        if (commands[i]->size == 0) return TRUE;
+    }
+    return FALSE;
+}
+
+void freePipeArray(int** tab, int size) {
+    for (int i = 0; i < size; i++) { free(tab[i]); }
     free(tab);
+}
+
+int** createPipes(int n) {
+    int** tubes = malloc(sizeof(int*)*n);
+
+    for (int i = 0; i < n; i++) {
+        tubes[i] = malloc(sizeof(int)*2);
+        pipe(tubes[i]);
+    }
+    
+    return tubes;
 }
 
 int main(int argc, char *argv[]) {
     char* line;
     char* prompt;
     int returnValue = 0;
-    
-    signal(SIGINT, SIG_IGN);
-    signal(SIGTERM, SIG_IGN);
+    initialSIGBehavior last;
+    struct sigaction ignore = {0};
+    ignore.sa_handler= SIG_IGN;
+
+    sigaction(SIGINT, &ignore, &last.sig_int);
+    sigaction(SIGTERM, &ignore, &last.sig_term);
+    // signal(SIGINT, SIG_IGN);
+    // signal(SIGTERM, SIG_IGN);
     //Init. de $PATH
     char* currPathTmp = Malloc(PATH_MAX * sizeof(char) / 2, "Erreur malloc getcwd");
     getcwd(currPathTmp, (PATH_MAX / 2));
@@ -41,43 +76,52 @@ int main(int argc, char *argv[]) {
     while (( line = readline((prompt = printPrompt(returnValue, getenv("PWD"))))) != NULL) {
         free(prompt);
         add_history(line);
+        char missingQuote = checkIfQuotesAreClosed(line);
+        if (missingQuote != ((char) 0)) line = completeLine(line, missingQuote);
         //printf("displayed : %s\n", line);        
-        
-        int* commandAmount = malloc(sizeof(int));
-        if (commandAmount == NULL) perror("error malloc");
+        int* commandAmount = Malloc(sizeof(int), "Erreur malloc, command Amount l.93 !");
         
         stringArr* parsed = SA_parseStringWithQuotes(line);
+        free(line);
+        if (parsed->size == 0) {
+            free(commandAmount);
+            SA_free(parsed);
+            continue;
+        }
         stringArr** commandsArgs = SA_split(parsed, "|", commandAmount);
         SA_free(parsed);
+        if (checkIfEmptyCommand(commandsArgs, *commandAmount)) {
+            freeSA_array(commandsArgs, *commandAmount);
+            free(commandAmount);
+            returnValue = 1; continue;
+        }
         
         command** tableauCommand = malloc(sizeof(command) * (*commandAmount));
         if (tableauCommand == NULL) perror("error malloc");
         
-        int **pipes = malloc(sizeof(int*) * (*commandAmount-1));
-        if (pipes == NULL) perror("error malloc");
-        
         // transformer le tableau de string en tableau de commandes et malloc les pipes
-        for (int i = 0; i < *commandAmount; i++) {
+        int **pipes = createPipes(*commandAmount-1);
+        for (int i = 0; i < *commandAmount; i++) { 
             tableauCommand[i] = buildCommandParsed(commandsArgs[i]);
-            if (i != *commandAmount - 1) {
-                pipes[i] = malloc(sizeof(int) * 2);
-                if (pipes[i] == NULL) perror("error malloc");
-                if ( pipe(pipes[i]) == -1) perror("error pipe\n");
-            }
         }
-
+        free(commandsArgs);
+        
         // Redirections en cas d'enchainement de pipes        
-        for (int i = 0; i < *commandAmount-1; i++) {
-            redirectInput(tableauCommand[i+1], pipes[i][0]);
-            redirectOutput(tableauCommand[i], pipes[i][1]);
+        int succeed = commandRedirection(tableauCommand, *commandAmount, pipes);
+        if (succeed == FALSE) {
+            freeCommandArrays(tableauCommand, *commandAmount);
+            freePipeArray(pipes, *commandAmount-1);
+            free(commandAmount);
+            returnValue = 1;
+            continue;
         }
         
         for (int i = 0; i < *commandAmount; i++) {       
             command *commande = tableauCommand[i];
-            if (commande->arguments->size == 0) continue;
+            if (commande->arguments->size == 0) {returnValue = 1; break;}
             
             // éxecution de la commande
-            commandResult* result = commandProcessHandler(commande, returnValue);
+            commandResult* result = commandProcessHandler(commande, returnValue, last);
 
             //SA_print(commande->arguments);
             
@@ -85,14 +129,13 @@ int main(int argc, char *argv[]) {
                 freeCommand(commande);
                 freePipeArray(pipes, *commandAmount-1);
                 free(tableauCommand);
-                free(commandsArgs);
                 free(commandAmount);
                 int exitCode = result->exitCode;
                 freeCommandResult(result); 
-                free(line);
                 return exitCode;
             }
             readResult(commande, result);
+            
             if (i==0 && *commandAmount > 1) {
                 close(pipes[0][1]);
             } else if (i == *commandAmount-1 && *commandAmount > 1) {
@@ -105,13 +148,12 @@ int main(int argc, char *argv[]) {
             freeCommand(commande);
             returnValue = result->success;
             freeCommandResult(result);
+            if(returnValue != 0) break;
         }
         
         freePipeArray(pipes, *commandAmount-1);
-        free(commandsArgs);
         free(commandAmount);
         free(tableauCommand);
-        free(line);
     }
 
     if(prompt != NULL) free(prompt);
