@@ -68,7 +68,7 @@ void printError(char* message) {
  * @param lastCommandResult the result of the last command runned in the smash.
  * @param path the path of the current directory
  */
-char* printPrompt(int lastCommandResult, char* path) {
+char* printPrompt(int lastCommandResult, int signalTerminated, char* path) {
     char* tmp = malloc(sizeof(char)*48);
     int reduced = 0;
     char* pathToPrint = path;
@@ -81,10 +81,10 @@ char* printPrompt(int lastCommandResult, char* path) {
         pathToPrint = reducePathPromptLenght(maxPathLenght);
     }
 
-    if (lastCommandResult == 0) {
-        snprintf(tmp, 46+resultCodeLen, "\033[32m[%d]\033[34m%s\033[00m$ ", lastCommandResult, pathToPrint);
-    }else if (lastCommandResult == 255) {
+    if (signalTerminated) {
         snprintf(tmp, 48, "\033[33m[SIG]\033[34m%s\033[00m$ ", pathToPrint);
+    }else if (lastCommandResult == 0) {
+        snprintf(tmp, 46+resultCodeLen, "\033[32m[%d]\033[34m%s\033[00m$ ", lastCommandResult, pathToPrint);
     }else {
         snprintf(tmp, 46+resultCodeLen, "\033[91m[%d]\033[34m%s\033[00m$ ", lastCommandResult, pathToPrint);
     }

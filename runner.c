@@ -54,6 +54,7 @@ int main(int argc, char *argv[]) {
     char* line;
     char* prompt;
     int returnValue = 0;
+    int lastWasSignalTerminated = FALSE;
     initialSIGBehavior last;
     struct sigaction ignore = {0};
     ignore.sa_handler= SIG_IGN;
@@ -73,7 +74,7 @@ int main(int argc, char *argv[]) {
     using_history();
 
     //Boucle principale
-    while (( line = readline((prompt = printPrompt(returnValue, getenv("PWD"))))) != NULL) {
+    while (( line = readline((prompt = printPrompt(returnValue, lastWasSignalTerminated, getenv("PWD"))))) != NULL) {
         free(prompt);
         add_history(line);
         char missingQuote = checkIfQuotesAreClosed(line);
@@ -147,6 +148,7 @@ int main(int argc, char *argv[]) {
 
             freeCommand(commande);
             returnValue = result->success;
+            lastWasSignalTerminated = result->statusExited;
             freeCommandResult(result);
             if(returnValue != 0) break;
         }

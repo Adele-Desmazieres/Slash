@@ -88,10 +88,12 @@ commandResult* startChildCommandProcess(command* command, initialSIGBehavior ini
             execvp(command->name, command->arguments->stringArr);
             exit(127);
         default: 
-                waitpid(r, &result, 0);
-                int resultStatus = WEXITSTATUS(result);
-                int tempReturnValue = (resultStatus == 2 || resultStatus == 15) ? 255 : resultStatus;
-                return buildCommandResult(tempReturnValue, NULL);
+            waitpid(r, &result, 0);
+            int resultStatus = WEXITSTATUS(result);
+            int tempReturnValue = (resultStatus == 2 || resultStatus == 15) ? 255 : resultStatus;
+            commandResult* cResult = buildCommandResult(tempReturnValue, NULL);
+            if(WIFSIGNALED(result)) {cResult->statusExited = TRUE;}
+            return cResult;
     }
 
     //Commande Inconnue.
