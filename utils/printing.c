@@ -75,14 +75,14 @@ char* printPrompt(int lastCommandResult, int signalTerminated, char* path) {
     int resultCodeLen = 0;
     if (lastCommandResult >=10) resultCodeLen = floor(log10(abs(lastCommandResult)));
 
-    int maxPathLenght = MAX_PATH_PROMPT_LENGTH - resultCodeLen;
+    int maxPathLenght = (signalTerminated) ? MAX_PATH_PROMPT_LENGTH - 2 : MAX_PATH_PROMPT_LENGTH - resultCodeLen;
     if (strlen(path) > maxPathLenght) {
         reduced = 1;
         pathToPrint = reducePathPromptLenght(maxPathLenght);
     }
 
     if (signalTerminated) {
-        snprintf(tmp, 48, "\033[33m[SIG]\033[34m%s\033[00m$ ", pathToPrint);
+        snprintf(tmp, 49, "\n\033[33m[SIG]\033[34m%s\033[00m$ ", pathToPrint);
     }else if (lastCommandResult == 0) {
         snprintf(tmp, 46+resultCodeLen, "\033[32m[%d]\033[34m%s\033[00m$ ", lastCommandResult, pathToPrint);
     }else {
