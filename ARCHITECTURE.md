@@ -1,62 +1,62 @@
 # Les structures de Commandes
 
 ## Command
-Lors du développement du processus slash, nous avons principalement vu les commandes commes des objets qui avaient leurs attributs propre et qui nous renseignait sur son état actuel tel que 
+Lors du développement du processus slash, nous avons principalement vu les commandes comme des objets qui avaient leurs attributs propres et qui nous renseignaient sur son état actuel tel que 
 * Son nom,
 * Ses arguments, comprenant aussi le nom de la commande.
 * Sa réussite pre-éxécution (utilisée si la commande échoue lors d'une redirection par exemple)
-* Ses différentes redirections courantes. Valeur utilisé pour dup2 avant l'execution d'une commande.
-* Deux arguments utilitaire :
-    * targetRef : Qui est utilisé pour récupéré le chemin de destination lorsqu'on utilise la commande cd
-    * logicalRef: Qui est utilisé pour determiné si la commande doit s'éxécuter dans un cadre physique ou logique.
+* Ses différentes redirections courantes. Valeur utilisée pour dup2 avant l'execution d'une commande.
+* Deux arguments utilitaires :
+    * targetRef : Qui est utilisée pour récupérer le chemin de destination lorsqu'on utilise la commande cd
+    * logicalRef: Qui est utilisée pour determiner si la commande doit s'éxécuter dans un cadre physique ou logique.
 
-Deux constructeur sont donc disponible pour cette structure :
-- `buildCommand` et `buildCommandParsed`, leur seul différence résident dans l'argument de la fonction.
-Si l'argument correspond déjà à une ligne parsée (cf. StringArray) alors utiliser `buildCommandParsed` sinon simplement `buildCommand`.
+Deux constructeurs sont donc disponibles pour cette structure :
+- `buildCommand` et `buildCommandParsed`, leur seule différence résident dans l'argument de la fonction.
+Si l'argument correspond déjà à une ligne parsée (cf. StringArray) alors on utilise `buildCommandParsed`, sinon simplement `buildCommand`.
 
-Des fonctions annexe pour cette structure sont proposé, entre autre `redirectErr`, `redirectOutput` et `redirectInput` qui redirige respectivements les sorties erreurs, standard et entrée standard le la commande ou encore `alterCommandArgs` qui modifiera les arguments de la commande, et changera son nom en conséquence. En effet, si la première case du tableau représentant les arguments, qui re présente le nom de la commande a été altéré, alors le nom de la commande change.
+Des fonctions annexes pour cette structure sont proposées, entre autre `redirectErr`, `redirectOutput` et `redirectInput` qui redirigent respectivement la sortie erreur, la sortie standard et l'entrée standard de la commande ou encore `alterCommandArgs` qui modifiera les arguments de la commande, et changera son nom en conséquence. En effet, si la première case du tableau représentant les arguments (qui représente le nom de la commande) a été altérée, alors le nom de la commande change.
 
-Une fonction `freeCommand` est aussi a disposition pour pouvoir libéré tout l'espace alloué à une structure de commande, arguments compris.
+Une fonction `freeCommand` est aussi a disposition pour pouvoir libérer tout l'espace alloué à une structure de commande, arguments compris.
 
 ## CommandResult
-Une fois qu'une commande est éxécutée, nous n'avons plus aucune raison de considéré les différentes propriétés de `Command`. De fait, à sa places, nous récupérons une strucutre approprié au résultat.
+Une fois qu'une commande est éxécutée, nous n'avons plus aucune raison de considérer les différentes propriétés de `Command`. De fait, à sa place, nous récupérons une structure appropriée pour le résultat.
 Cette structure contient les informations suivantes :
 * La réussite de la commande exécutée post-éxécution.
-* Si cette éxécution doit être fatal au processus slash à cause d'une grave erreur ou d'un appel à exit.
+* Si cette éxécution doit être fatale au processus slash à cause d'une grave erreur ou d'un appel à exit.
 * Le code de retour de la commande exécutée.
-* Si la commande a été interrompu via un signal ou non.
-* Un message de résultat. Peut être aussi un message d'erreur.
+* Si la commande a été interrompue via un signal ou non.
+* Un message de résultat qui peut aussi être un message d'erreur.
 
-Deux constructeur sont donc disponible pour cette structure :
-- `buildCommandResult` et `buildFatalCommandResult`, leur seul réside dans le fait que la `commandResult` généré sera fatale au programme ou non.
+Deux constructeurs sont donc disponibles pour cette structure :
+- `buildCommandResult` et `buildFatalCommandResult`, leur principe réside dans le fait que la structure `commandResult` générée sera fatale au programme ou non.
 
-Une fonction `freeCommandResult` est aussi a disposition pour pouvoir libéré tout l'espace alloué à une structure `commandResult`.
+Une fonction `freeCommandResult` est aussi a disposition pour pouvoir libérer tout l'espace alloué à une structure `commandResult`.
 
 # Parsing
-Pour faciliter au mieux l'éxéction des commandes, il est nécessaire de faire du parsing, en séparant la ligne écrite par l'utilisateur en plusieurs chaînes de caractères plus petite représentant chacune un charactère.
+Pour faciliter au mieux l'éxécution des commandes, il est nécessaire de faire du parsing, en séparant la ligne écrite par l'utilisateur en plusieurs chaînes de caractères plus petites représentant chacune un seul argument.
 
-Cependant nous avons remarqué pendant le développement que les tableau de chaînes de caractères nous était trés utile en général.
-De fait, nous avons mis en place une sorte de mini librairie qui nous permettrait d'utiliser ces tableaux sans avoir à écrire du code redondant qui pourrait potentiellement créer des bugs ou des fuites de mémoires.
+Cependant nous avons remarqué pendant le développement que les tableaux de chaînes de caractères nous étaient très utiles en général.
+De fait, nous avons mis en place une sorte de petite librairie qui nous permettent d'utiliser ces tableaux sans avoir à écrire du code redondant qui pourrait potentiellement créer des bugs ou des fuites de mémoires.
 
 ## String Array
-Comme son nom l'indique cette structure représente un tableau de chaîne de caractère. Elle possède seulement deux propriétés :
-* Le tableau effectif de String
+Comme son nom l'indique cette structure représente un tableau de chaîne de caractères. Elle possède seulement deux propriétés :
+* Le tableau effectif de string
 * La taille de ce tableau
 
 Un seul constructeur est disponible `createStringArray`. Celui-ci crée donc un StringArray vide, entre autre avec un tableau de string vide et une taille de 0.
 
 Plusieurs fonctions sont proposées pour pouvoir manipuler librement cette StringArray :
-* `SA_add`                    - Ajoute une chaînes de charactères en fin de tableau
+* `SA_add`                    - Ajoute une chaîne de charactères en fin de tableau
 * `SA_addFinalNull`           - Ajoute un pointeur NULL en fin de tableau
 * `SA_remove`                 - Supprime les n derniers éléments du tableau
-* `SA_print`                  - Affiche le contenu de la String Array
-* `SA_splice`                 - Retire N élément à partir d'un index donnée et retourne ces élément supprimé. Aucune fonctionnalité de remplacement n'a cependant était intégrée.
-* `SA_split`                  - Sépare la string array courante considérant un séparateur spécifié. Ces séparateurs ne serons pas ajouté aux String Array résultantes.
-* `SA_indexOf`                - Cherche un élémént et retourne son index dans la String Array sinon -1
-* `SA_indexOfArray`           - Cherche un élémént parmis une liste d'éléments et retourne son index dans la String Array sinon -1
+* `SA_print`                  - Affiche le contenu de la string Array
+* `SA_splice`                 - Retire n éléments à partir d'un index donné et renvoie les éléments supprimés. Aucune fonctionnalité de remplacement n'a cependant été intégrée.
+* `SA_split`                  - Sépare la string array courante considérant un séparateur spécifié. Ces séparateurs ne seront pas ajoutés aux string Array résultantes.
+* `SA_indexOf`                - Cherche un élémént et renvoie son index dans la string Array sinon -1.
+* `SA_indexOfArray`           - Cherche un élémént dans une liste d'éléments et renvoie son index dans la String Array sinon -1
 * `SA_parseString`            - Transforme une chaîne de caractères en StringArray en se basant sur un délimiteur espace
-* `SA_parseArray`             - Transforme un tableau de chaîne de caractère en un String Array
-* `SA_parseStringWithQuotes`  - Transforme une chaîne de caractères en StringArray en se basant sur un délimiteur espace. Cependant, ici un bloc entouré par des guillemet est compris comme un argument à part.
+* `SA_parseArray`             - Transforme un tableau de chaîne de caractères en un String Array
+* `SA_parseStringWithQuotes`  - Transforme une chaîne de caractères en StringArray en se basant sur un délimiteur espace. Cependant, ici un bloc entouré par des guillemets est compris comme un argument à part.
 * `SA_free(stringArr* array)` - Une fonction qui libère la mémoire de la structure.
 
 # Commandes internes
@@ -66,17 +66,17 @@ La commande exit procède en deux étapes :
 Elle prend en charge les arguments qui lui sont donnés. Plus exactement, seulement le premier.
 - Handler :
     - Si celui-ci n'existe pas, renvoie la valeur de retour de la dernière commande exécutée.
-    - Si celui-ci n'est pas un nombre, renvoie -1
-    - Si celui-ci est un nombre valide, renvoie ce nombre
+    - Si celui-ci n'est pas un nombre, renvoie -1.
+    - Si celui-ci est un nombre valide, renvoie ce nombre.
 - Runner :
-    - Si la valeur de retour est inférieur à 0, une erreur est générée.
+    - Si la valeur de retour est inférieure à 0, une erreur est générée.
     - Si la valeur de retour est un chiffre valide, le programme exitera avec cette valeur.
 
 ## La commande pwd
 Cette commande procède en 3 étapes :
 Elle prend en charge le premier argument qui lui est passé.
 - Handler :
-    - Si celui-ci n'existe pas la valeur de la structure commmand `logicalRef` est inchangé (puisque TRUE par défaut).
+    - Si celui-ci n'existe pas la valeur de la structure command `logicalRef` est inchangé (puisque TRUE par défaut).
     - Si celui-ci est un `-L` applique le même comportement.
     - Si celui-ci est un `-R` change la valeur de `logicalRef` à FALSE.
     - Si aucun des cas précédent n'est rencontré, l'attribue `success` de la command est mis à false.
