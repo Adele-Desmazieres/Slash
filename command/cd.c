@@ -79,7 +79,6 @@ Stack* split(Stack* s, char* path, int forward) {
 	char* pointeur = strsep(&tmp, "/");
 	
 	while (pointeur != NULL) {
-		//printf("%s\n", pointeur);
 		push(s, pointeur);
 		pointeur = strsep(&tmp, "/");
 	}
@@ -90,7 +89,8 @@ Stack* split(Stack* s, char* path, int forward) {
 }
 
 /* CHEMIN LOGIQUE */
-/* Construit le chemin du new rep courant, en ajoutant au fur et à mesure les rep du chemin ciblé au chemin actuel. */
+/* Construit le chemin du new rep courant, 
+en ajoutant au fur et à mesure les rep du chemin ciblé au chemin actuel. */
 char* buildTargetDirectory(command* command, char* relativeLogicalTarget, int relatif) {
 	Stack *sCurrent = newStack();
 	if (relatif) {
@@ -100,31 +100,28 @@ char* buildTargetDirectory(command* command, char* relativeLogicalTarget, int re
 	Stack *sLongTarget = newStack();
 	sLongTarget = split(sLongTarget, relativeLogicalTarget, FALSE);
 
-	
 	char* tmp;
 	char* token;
-	//printf(" - empilement - \n");
 	
-	// rempli la pile du chemin actuel avec les rep du chemin ciblé
-	while ((token = pop(sLongTarget))) { // parcourir les tokens du string chemin, séparés par des /
+	// remplie la pile du chemin actuel avec les rep du chemin ciblé
+	// parcourir les tokens du string chemin, séparés par des /
+	while ((token = pop(sLongTarget))) { 
 		
-		if (strcmp(token, "..") == 0) {
+		if (strcmp(token, "..") == 0) { // .. -> enlever le dernier token
 			tmp = pop(sCurrent);
 			free(tmp);
 
-		} else if (strcmp(token, ".") == 0) {
+		} else if (strcmp(token, ".") == 0) { // . -> sauter l'etape
 			continue;
 
-		} else {
+		} else { // sinon ajouter ce nouveau token sur la pile
 			push(sCurrent, token);
 		}
 
 		free(token);
 	}
 	
-	// reconstruit le nouveau chemin actuel en dépilant la pile
-	//printf(" - dépilement - \n");
-	
+	// reconstruit le nouveau chemin actuel dans ret en dépilant la pile
 	sCurrent = reverseStack(sCurrent);
 	char* ret = malloc(sizeof(char) * 2); 
 	ret[0] = '/';
@@ -134,7 +131,6 @@ char* buildTargetDirectory(command* command, char* relativeLogicalTarget, int re
 	while (!isEmpty(sCurrent)) {
 		
 		token = pop(sCurrent);
-		//printf("pop : %s\n", token);
 		
 		ret = realloc(ret, sizeof(char) * (len + strlen(token) + 1));
 		if (ret == NULL) perror("realloc\n");
@@ -152,17 +148,13 @@ char* buildTargetDirectory(command* command, char* relativeLogicalTarget, int re
 		
 	}
 	
-	//printf("final : %s\n", ret);
-	
 	freeStack(sCurrent);
 	freeStack(sLongTarget);
-	
 	return ret;
 }
 
 
 /* CHEMIN LOGIQUE */
-// TODO : si cd logique failed, tester en physique
 commandResult* cdLogical(command* command, char* target) {
 	char first = target[0];
 	commandResult* ret;
@@ -200,8 +192,6 @@ commandResult* setTargetToEnvVar(command* command, char* envVarName) {
 		return cdTarget(command);
 		
 	} else {
-		// TODO GERTER LE MALLOC DE YANIS DANS COMMAND.C pour pouvoir malloc tous les mess d'erreur
-		// afin d'afficher le nom de la var non initialisée via concaténation
 		return buildCommandResult(ERROR, "Variable d'environnement non définie.\n");
 	}
 }
@@ -224,7 +214,7 @@ commandResult* cdCommandRunner(command* command) {
 				command->logicalRef = TRUE;
 				commandResult = setTargetToEnvVar(command, "OLDPWD"); 
 				
-			} else { // cd path/to/directory
+			} else { // "cd path/to/directory" -> cas logique
 				command->logicalRef = TRUE;
 				char* tmp = Malloc(strlen(command->arguments->stringArr[1])*sizeof(char)+1, "");
 				strcpy(tmp, command->arguments->stringArr[1]);
@@ -234,16 +224,17 @@ commandResult* cdCommandRunner(command* command) {
 		
 		// "cd [-L | -P] path/to/directory"
 		case 3 :
-			//command->targetRef = command->arguments->stringArr[2];
 			if (strcmp(command->arguments->stringArr[1], "-L" ) == 0) {
 				char* tmp = Malloc(strlen(command->arguments->stringArr[2])*sizeof(char)+1, "");
 				strcpy(tmp, command->arguments->stringArr[2]);
 				commandResult = cdLogical(command, tmp); 
+				
 			} else if (strcmp(command->arguments->stringArr[1], "-P" ) == 0) {
 				command->logicalRef = FALSE;
 				char* tmp = Malloc(strlen(command->arguments->stringArr[2])*sizeof(char)+1, "");
 				strcpy(tmp, command->arguments->stringArr[2]);
 				commandResult = setTargetToDirectory(command, tmp);
+				
 			} else {
 				commandResult = buildCommandResult(ERROR, "Invalid argument for the command cd. Expected command format : cd [-L | -P | - ] [ref].\n");
 			}
