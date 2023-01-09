@@ -94,3 +94,38 @@ Elle prend en charge le premier argument qui lui est passé.
 2. Chemin physique : le chemin donné en argument est utilisé pour se déplacer dedans via chdir(). On met à jour les variables d'environnement :  OLDPWD prend la valeur de PWD, puis PWD prend la valeur du répertoire courant renvoyée par getcwd(). 
 
 3. Chemin logique : le chemin renvoyé en argument est traité avant d'être utilisé. C'est-a-dire le chemin actuel est splité en tokens (séparés par "/" et) ajoutés à une pile, et le chemin en argument aussi dans une autre pile. Puis ce dernier est dépilé au fur et à mesure, en ajoutant ses tokens dans la pile du chemin actuel. Seulement quand on rencontre ".." on dépile le chemin actuel plutôt que d'empiler ce token, et on ignore les tokens ".". A la fin de ce traitement, la pile contient le chemin vers le nouveau répertoire, donc on change de répertoire avec chdir() et on met à jour les variables d'environnement OLDPWD et PWD en conséquence.
+
+# Redirections
+
+## Pipes
+
+Les pipes sont générés presque en même temps que les commandes. En effet, nous attendons lorsque des pipes sont nécessaires, nous créeons un tableau de tubes de taille n-1 ou n est le nombre de commande detecté par nos différent parseur (`SA_parseStringWithQuotes` ou `SA_parseStringWithQuotes`) et séparateur `SA_split`.
+
+Une fois ceci fait, nous itérons sur le tableau de commande. On redirige la sortie de la commande i sur le tube i et l'entrée de la commande i+1 sur ce même tube i.
+
+Cependant ces redirections peuvent être "écrasés" par les redirection fichiers.
+
+## Redirections Fichier
+
+Ces redirections sont toujours fait après les redirection pour les tubes. Cela viens notamment d'un choix de notre part. On donne une priorité à ce qui le plus proche de la commande entre les redirections fichiers et tubes.
+
+Ces redirections se font grace aux fonction de `StringArray` en particulier, on initialise un tableau de string représentant chaque symbole pour la redirections vers un fichier et on les cherches avec `SA_indexOfArray`. Une fois trouvé, on supprime ce symbole et l'argument qui suit avec `SA_splice` et on détermine avec un switch/case et selon le symbole de redirections quel cas appliqué (comment ouvrir le fichier et où le rediriger.) plus exactement :
+
+- `<`   : REDIRECT_INPUT         --> Redirige l'entrée standard
+- `>`   : REDIRECT_OUTPUT        --> Redirige la sortie standard dans un fichier. Création de ce fichier si il n'existe pas.
+- `>|`  : REDIRECT_OUTPUT_TRUNC  --> Redirige la sortie standard dans un fichier en écrasant son contenu.
+- `>>`  : REDIRECT_OUTPUT_CONCAT --> Redirige la sortie standard dans un fichier en ajoutant les données à la fin du fichier.  
+- `2>`  : REDIRECT_ERROR         --> Redirige la sortie erreur dans un fichier Création de ce fichier si il n'existe pas.
+- `2>>` : REDIRECT_ERROR_TRUNC   --> Redirige la sortie erreur dans un fichier en écrasant son contenu.
+- `2>|` : REDIRECT_ERROR_CONCAT  --> Redirige la sortie erreur dans un fichier en ajoutant les données à la fin du fichier.
+
+# Expansions
+
+Pour chaque arguments d'une commande, son nom inclu nous vérifions si cette chaîne contiens une étoile.
+
+Si une étoile est trouvé une fonction `jokerSimple` sera appelé. Celle-ci va notamment determiné si l'étoile détecter est une étoile ou une double étoile et effectuer les appels en conséquendes.
+
+- `*` : On appel `parcourirRepertoire`. Cette fonction va s'occuper de générer un suffixe correspondant à celui rechercher par l'étoile. Celui-ci sera appliqué à tout les fichier correspondant à l'emplacement de l'étoile dans un chemin spécifié par l'utilisateur. Si ce suffixe est `./` ou `../`, nous ajoutons simplement leurs noms au chemin courant de la recherche.
+Sinon, nous determinons, si le noeud recherché est un dossier avec la présence d'un `/` à la fin. Si oui, nous traiterons que les dossier, sinon un parcourir classique est effectué.
+Plus exactement, si le fichier match avec le suffice, ce qu'on vérifier avec `isSuffix`, on ajoute le chemin depuis le dossier initial de la recherche à la liste des chemins trouvé (un `listNode`).
+- `**` : La double étoile fonctione principalement en utilisant `parcourirRepertoire` sur chaque noeud de l'arborescence.
